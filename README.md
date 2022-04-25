@@ -1,7 +1,5 @@
 # Card-demand-forecasting
-Car Rental Forecasting , ABC is car rental company and they want to forecast the demand hourly.  The Historical hourly data of car demand  is given from 2018-08-18 to 2021-02-28 and task is to predict hourly car demand from 2021- 03-01 to 2022-03-28. 
 
-Demand Forecasting
 
 Can you forecast the demand of the car rentals on an hourly basis?
 
@@ -13,6 +11,8 @@ ABC is a car rental company based out of Bangalore. It rents cars for both in an
 In recent times, the demand for cars is on the rise. As a result, the company would like to tackle the problem of supply and demand. The ultimate goal of the company is to strike the balance between the supply and demand inorder to meet the user expectations. 
 
 The company has collected the details of each rental. Based on the past data, the company would like to forecast the demand of car rentals on an hourly basis. 
+
+The Historical hourly data of car demand  is given from 2018-08-18 to 2021-02-28 and task is to predict hourly car demand from 2021- 03-01 to 2022-03-28. 
 
 
 Objective
