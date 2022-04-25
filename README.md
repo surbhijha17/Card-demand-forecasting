@@ -55,21 +55,13 @@ Submission File Format
 sample_submission.csv contains 3 variables - date, hour and demand
 
 
-Variable
+Variable   Description
 
-Description
+date       Date (yyyy-mm-dd)
 
-date
+hour       Hour of the day
 
-Date (yyyy-mm-dd)
-
-hour
-
-Hour of the day
-
-demand
-
-No. of car rentals in a hour
+demand     No. of car rentals in a hour
 
 
 Evaluation metric
