@@ -4,7 +4,7 @@
 Can you forecast the demand of the car rentals on an hourly basis?
 
 
-Problem Statement
+**Problem Statement**
 
 ABC is a car rental company based out of Bangalore. It rents cars for both in and out stations at affordable prices. The users can rent different types of cars like Sedans, Hatchbacks, SUVs and MUVs, Minivans and so on.
 
@@ -15,43 +15,43 @@ The company has collected the details of each rental. Based on the past data, th
 The Historical hourly data of car demand  is given from 2018-08-18 to 2021-02-28 and task is to predict hourly car demand from 2021- 03-01 to 2022-03-28. 
 
 
-Objective
+**Objective**
 
 The main objective of the problem is to develop the machine learning approach to forecast the demand of car rentals on an hourly basis.
 
 
-Data Dictionary
+**Data Dictionary**
 
 You are provided with 3 files - train.csv, test.csv and sample_submission.csv
 
-Training set
+**Training set**
 
 train.csv contains the hourly demand of car rentals from August 2018 to February 2021.
 
 
-Variable Description
+**Variable Description**
 
-date.   Date (yyyy-mm-dd)
+**date.   Date (yyyy-mm-dd)
 
-hour.   Hour of the day
+**hour.   Hour of the day
+**
+demand. No. of car rentals in a hour******
 
-demand. No. of car rentals in a hour
 
-
-Test set
+**Test set**
 
 test.csv contains only 2 variables: date and hour. You need to predict the hourly demand of car rentals for the next 1 year i.e. from March 2021 to March 2022.
 
 
-Variable      Description
+**Variable      Description
 
-date          Date (yyyy-mm-dd)
+**date          Date (yyyy-mm-dd)
 
-hour          Hour of the day
+**hour          Hour of the day******
 
 
-Submission File Format
-
+**Submission File Format
+**
 sample_submission.csv contains 3 variables - date, hour and demand
 
 
@@ -64,7 +64,7 @@ hour       Hour of the day
 demand     No. of car rentals in a hour
 
 
-Evaluation metric
+**Evaluation metric**
 
 The evaluation metric for this hackathon is RMSE score.
 
