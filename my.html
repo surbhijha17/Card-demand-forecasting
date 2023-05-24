@@ -1,0 +1,21 @@
+from flask import Flask, render_template, request, jsonify
+
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/process_data', methods=['POST'])
+def process_data():
+    data = request.get_json()
+    
+    dictionary_data = data['dictionaryData']
+    string_data = data['stringData']
+    
+    # Process the data as needed
+    
+    return jsonify({'message': 'Data received successfully'})
+
+if __name__ == '__main__':
+    app.run()
