@@ -5,13 +5,11 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
-            $('#submitBtn').click(function() {
-                var dictionaryData = {
-                    key1: 'value1',
-                    key2: 'value2'
-                };
-
-                var stringData = 'some string data';
+            $('#submitBtn').click(function(e) {
+                e.preventDefault();
+                
+                var dictionaryData = $('#dictionaryInput').val();
+                var stringData = $('#stringInput').val();
 
                 var requestData = {
                     dictionaryData: dictionaryData,
@@ -35,6 +33,14 @@
 </head>
 <body>
     <h1>AJAX POST Request Example</h1>
-    <button id="submitBtn">Submit</button>
+    <form>
+        <label for="dictionaryInput">Dictionary Data:</label>
+        <input type="text" id="dictionaryInput" name="dictionaryData"><br><br>
+
+        <label for="stringInput">String Data:</label>
+        <input type="text" id="stringInput" name="stringData"><br><br>
+
+        <button id="submitBtn" type="submit">Submit</button>
+    </form>
 </body>
 </html>
