@@ -1,51 +1,40 @@
-let audioStream;
-let mediaRecorder;
-const recordedChunks = [];
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AJAX POST Request Example</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#submitBtn').click(function() {
+                var dictionaryData = {
+                    key1: 'value1',
+                    key2: 'value2'
+                };
 
-// Function to handle start recording button click
-function startRecording() {
-  navigator.mediaDevices.getUserMedia({ audio: true })
-    .then(stream => {
-      audioStream = stream;
+                var stringData = 'some string data';
 
-      // Create a media recorder to record the audio stream
-      mediaRecorder = new MediaRecorder(stream);
+                var requestData = {
+                    dictionaryData: dictionaryData,
+                    stringData: stringData
+                };
 
-      // Event handler for data available from the media recorder
-      mediaRecorder.ondataavailable = function (event) {
-        recordedChunks.push(event.data);
-      };
+                var jsonData = JSON.stringify(requestData);
 
-      // Start recording
-      mediaRecorder.start();
-    })
-    .catch(error => {
-      console.error('Error accessing microphone:', error);
-    });
-}
-
-// Function to handle stop recording button click
-function stopRecording() {
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-    mediaRecorder.stop();
-
-    // Create a new Blob from the recorded chunks
-    const recordedBlob = new Blob(recordedChunks, { type: 'audio/webm' });
-
-    // Create a download link for the recorded audio
-    const downloadLink = document.createElement('a');
-    downloadLink.href = URL.createObjectURL(recordedBlob);
-    downloadLink.download = 'recording.webm';
-    downloadLink.click();
-
-    // Clean up resources
-    recordedChunks.length = 0;
-    audioStream.getTracks().forEach(track => track.stop());
-    audioStream = null;
-    mediaRecorder = null;
-  }
-}
-
-// Event listeners for start and stop buttons
-document.getElementById('startButton').addEventListener('click', startRecording);
-document.getElementById('stopButton').addEventListener('click', stopRecording);
+                $.ajax({
+                    url: '/process_data',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: jsonData,
+                    success: function(response) {
+                        console.log(response.message);
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>AJAX POST Request Example</h1>
+    <button id="submitBtn">Submit</button>
+</body>
+</html>
