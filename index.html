@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Waveform Media Player</title>
+    <link rel="stylesheet" href="https://unpkg.com/wavesurfer.js/css/wavesurfer.css">
+</head>
+<body>
+    <form id="upload-form" method="POST" enctype="multipart/form-data">
+        <input id="audio-file" type="file" name="audio_file">
+        <input type="submit" value="Upload">
+    </form>
+
+    <div id="waveform"></div>
+    <div>
+        <button id="play-button">Play</button>
+        <button id="pause-button">Pause</button>
+    </div>
+
+    <script src="https://unpkg.com/wavesurfer.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var wavesurfer = WaveSurfer.create({
+                container: '#waveform',
+                waveColor: 'violet',
+                progressColor: 'purple',
+                barHeight: 2,
+                height: 100,
+                responsive: true,
+                normalize: true,
+                interact: false
+            });
+
+            var uploadForm = document.getElementById('upload-form');
+            var fileInput = document.getElementById('audio-file');
+            var playButton = document.getElementById('play-button');
+            var pauseButton = document.getElementById('pause-button');
+
+            uploadForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var file = fileInput.files[0];
+                var formData = new FormData();
+                formData.append('audio_file', file);
+
+                fetch('/', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    var filePath = data.file_path;
+                    wavesurfer.load('/' + filePath);
+                })
+                .catch(function (error) {
+                    console.log('Error:', error);
+                });
+            });
+
+            playButton.addEventListener('click', function () {
+                wavesurfer.play();
+            });
+
+            pauseButton.addEventListener('click', function () {
+                wavesurfer.pause();
+            });
+        });
+    </script>
+</body>
+</html>
