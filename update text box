@@ -1,0 +1,43 @@
+import tkinter as tk
+
+# Set up the Tkinter application
+root = tk.Tk()
+root.title("Real-time Transcription")
+root.geometry("400x200")
+
+# Create a Text widget to display the transcriptions
+transcription_text = tk.Text(root, height=10, width=40)
+transcription_text.pack()
+
+# Store the previous content
+previous_content = ""
+
+# Function to update the text widget
+def update_text(new_text):
+    global previous_content
+
+    # Find the difference between previous and new content
+    diff_start = 0
+    for i in range(min(len(previous_content), len(new_text))):
+        if previous_content[i] != new_text[i]:
+            diff_start = i
+            break
+    
+    # Update the text widget with the changed portion
+    current_text = transcription_text.get("1.0", tk.END)
+    transcription_text.delete("1.0", tk.END)
+    transcription_text.insert(tk.END, current_text.strip() + new_text[diff_start:], 'changed')
+    transcription_text.see(tk.END)
+
+    # Apply tag to the changed portion
+    transcription_text.tag_configure('changed', background='yellow')
+    
+    previous_content = new_text
+
+# Update the text widget with the desired content at specific intervals
+root.after(1000, lambda: update_text("hii this is surbhi\n"))
+root.after(1300, lambda: update_text("hii this is surbhi s\n"))
+root.after(1310, lambda: update_text("hii this is surbhi su\n"))
+
+# Run the Tkinter event loop
+root.mainloop()
