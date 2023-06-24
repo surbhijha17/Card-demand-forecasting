@@ -1,70 +1,42 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Waveform Media Player</title>
-    <link rel="stylesheet" href="https://unpkg.com/wavesurfer.js/css/wavesurfer.css">
-</head>
-<body>
-    <form id="upload-form" method="POST" enctype="multipart/form-data">
-        <input id="audio-file" type="file" name="audio_file">
-        <input type="submit" value="Upload">
-    </form>
+import tkinter as tk
+import re
 
-    <div id="waveform"></div>
-    <div>
-        <button id="play-button">Play</button>
-        <button id="pause-button">Pause</button>
-    </div>
+def check_and_format_tags():
+    lines = text_editor.get("1.0", "end").splitlines()
 
-    <script src="https://unpkg.com/wavesurfer.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var wavesurfer = WaveSurfer.create({
-                container: '#waveform',
-                waveColor: 'violet',
-                progressColor: 'purple',
-                barHeight: 2,
-                height: 100,
-                responsive: true,
-                normalize: true,
-                interact: false
-            });
+    for i, line in enumerate(lines):
+        text_editor.tag_remove("green", f"{i+1}.0", f"{i+1}.end")
+        text_editor.tag_remove("red", f"{i+1}.0", f"{i+1}.end")
 
-            var uploadForm = document.getElementById('upload-form');
-            var fileInput = document.getElementById('audio-file');
-            var playButton = document.getElementById('play-button');
-            var pauseButton = document.getElementById('pause-button');
+        match_agent = re.search(r"\bAgent:", line)
+        match_customer = re.search(r"\bCustomer:", line)
 
-            uploadForm.addEventListener('submit', function (e) {
-                e.preventDefault();
-                var file = fileInput.files[0];
-                var formData = new FormData();
-                formData.append('audio_file', file);
+        if match_agent:
+            start_index = match_agent.start()
+            text_editor.tag_add("green", f"{i+1}.{start_index}", f"{i+1}.{start_index + len('Agent:')}")
+        if match_customer:
+            start_index = match_customer.start()
+            text_editor.tag_add("red", f"{i+1}.{start_index}", f"{i+1}.{start_index + len('Customer:')}")
 
-                fetch('/', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(function (response) {
-                    return response.json();
-                })
-                .then(function (data) {
-                    var filePath = data.file_path;
-                    wavesurfer.load('/' + filePath);
-                })
-                .catch(function (error) {
-                    console.log('Error:', error);
-                });
-            });
+    # Scroll the text editor to show the new content
+    text_editor.yview_moveto(1.0)
 
-            playButton.addEventListener('click', function () {
-                wavesurfer.play();
-            });
+    # Schedule the next check after 100 milliseconds
+    text_editor.after(100, check_and_format_tags)
 
-            pauseButton.addEventListener('click', function () {
-                wavesurfer.pause();
-            });
-        });
-    </script>
-</body>
-</html>
+root = tk.Tk()
+text_editor = tk.Text(root)
+text_editor.pack()
+
+text_editor.tag_configure("default", foreground="black")
+text_editor.tag_configure("green", foreground="green", font=("TkDefaultFont", 11, "bold"))
+text_editor.tag_configure("red", foreground="red", font=("TkDefaultFont", 11, "bold"))
+
+# Automatically insert initial text
+initial_text = "Agent: hii this surbhi\nCustomer: i am doing good thank you"
+text_editor.insert("end", initial_text)
+
+# Start the periodic check
+check_and_format_tags()
+
+root.mainloop()
