@@ -1,101 +1,46 @@
 import tkinter as tk
-from tkinter import scrolledtext
-import pyaudio
-import wave
-import threading
-from google.cloud import speech
+import re
 
-class AudioRecorderGUI:
-    def __init__(self):
-        self.root = tk.Tk()
-        self.root.title("Audio Recorder")
-        self.root.geometry("400x300")
+def check_and_format_tags(event):
+    current_line_number = int(text_editor.index("insert").split(".")[0])
+    previous_line_number = current_line_number - 1
+    prev_line_text = text_editor.get(f"{previous_line_number}.0", f"{previous_line_number}.end").strip()
+    tags = text_editor.tag_names()  # Get all the applied tags
 
-        self.transcript_label = tk.Label(self.root, text="Transcription:")
-        self.transcript_label.pack(pady=10)
+    for tag in tags:
+        if tag in prev_line_text:
+            text_editor.tag_add("bold", f"{current_line_number}.0", f"{current_line_number}.end")
+            text_editor.tag_config("bold", font=("TkDefaultFont", 11, "bold"))
+            break
 
-        self.transcript_text = scrolledtext.ScrolledText(self.root, height=10, width=50)
-        self.transcript_text.pack()
+    current_line_text = text_editor.get(f"{current_line_number}.0", f"{current_line_number}.end").strip()
+    if re.search(r"\bAgent\b", current_line_text):
+        match_obj = re.search(r"\bAgent\b", current_line_text)
+        tag_start = match_obj.start()
+        tag_end = match_obj.end()
+        text_editor.tag_add("green", f"{current_line_number}.0+{tag_start}c", f"{current_line_number}.0+{tag_end}c")
+        text_editor.tag_config("green", foreground="green")
+        text_editor.tag_configure("bold")
+    if re.search(r"\bCustomer\b", current_line_text):
+        # Apply red color to "Customer" tag
+        match_obj = re.search(r"\bCustomer\b", current_line_text)
+        tag_start = match_obj.start()
+        tag_end = match_obj.end()
+        text_editor.tag_add("red", f"{current_line_number}.0+{tag_start}c", f"{current_line_number}.0+{tag_end}c")
+        text_editor.tag_config("red", foreground="red")
 
-        self.transcript_text.config(state=tk.DISABLED)  # Disable text editing
+    # Scroll the text editor to show the new line
+    text_editor.yview_moveto(1.0)
 
-        self.record_button = tk.Button(self.root, text="Start Recording", command=self.record_audio)
-        self.record_button.pack(pady=10)
+root = tk.Tk()
+text_editor = tk.Text(root)
+text_editor.pack()
 
-        self.is_recording = False
-        self.p = pyaudio.PyAudio()
-        self.stream = None
-        self.client = speech.SpeechClient()
+text_editor.tag_configure("bold", font=("TkDefaultFont", 18, "bold"))
+text_editor.tag_configure("green", foreground="green")
+text_editor.tag_configure("red", foreground="red")
 
-    def record_audio(self):
-        if not self.is_recording:
-            self.is_recording = True
-            self.record_button.config(text="Stop Recording")
+text_editor.bind("<Return>", check_and_format_tags)
+text_editor.bind("<KeyRelease>", check_and_format_tags)
 
-            threading.Thread(target=self._start_recording).start()
-
-        else:
-            self.is_recording = False
-            self.record_button.config(text="Start Recording")
-
-            self.stream.stop_stream()
-            self.stream.close()
-
-    def _start_recording(self):
-        chunk = 1024
-        sample_format = pyaudio.paInt16
-        channels = 1
-        rate = 16000
-
-        self.stream = self.p.open(format=sample_format,
-                                  channels=channels,
-                                  rate=rate,
-                                  input=True,
-                                  frames_per_buffer=chunk)
-
-        audio_generator = self._generate_audio_chunks(chunk)
-        self._transcribe_audio_stream(audio_generator)
-
-    def _generate_audio_chunks(self, chunk_size):
-        while self.is_recording:
-            data = self.stream.read(chunk_size)
-            yield data
-
-    def _transcribe_audio_stream(self, audio_generator):
-        config = speech.RecognitionConfig(
-            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-            sample_rate_hertz=16000,
-            language_code="en-US",
-        )
-
-        streaming_config = speech.StreamingRecognitionConfig(config=config)
-
-        requests = (speech.StreamingRecognizeRequest(audio_content=audio_chunk) for audio_chunk in audio_generator)
-
-        responses = self.client.streaming_recognize(streaming_config, requests)
-
-        for response in responses:
-            if response.results:
-                for result in response.results:
-                    if result.is_final:
-                        self.transcript_text.config(state=tk.NORMAL)  # Enable text editing
-                        self.transcript_text.insert(tk.END, "Speaker 1: " + result.alternatives[0].transcript + "\n")
-                        self.transcript_text.config(state=tk.DISABLED)  # Disable text editing
-                        self.transcript_text.tag_configure("bold", font=("TkDefaultFont", 12, "bold"))
-                        self.transcript_text.tag_add("bold", "1.0", "1.end")  # Apply bold to the label
-                        self.transcript_text.see(tk.END)  # Auto-scroll to the end
-                    else:
-                        self.transcript_text.config(state=tk.NORMAL)  # Enable text editing
-                        self.transcript_text.delete(1.0, tk.END)
-                        self.transcript_text.insert(tk.END, "Speaker 2: " + result.alternatives[0].transcript)
-                        self.transcript_text.config(state=tk.DISABLED)  # Disable text editing
-                        self.transcript_text.tag_configure("bold", font=("TkDefaultFont", 12, "bold"))
-                        self.transcript_text.tag_add("bold", "2.0", "2.end")  # Apply bold to the label
-
-    def run(self):
-        self.root.mainloop()
-
-
-# Usage
-recorder = AudioRecorderGUI()
-recorder.run()
+root.mainloop()
