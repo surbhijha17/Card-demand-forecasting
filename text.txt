@@ -1,0 +1,35 @@
+import os
+import json
+from cryptography.fernet import Fernet
+
+# Path to your authentication file
+auth_file_path = 'path_to_your_auth_file.json'
+
+# Encryption key (replace with your own key)
+encryption_key = b'your_encryption_key'
+
+# Encrypt the authentication file
+def encrypt_auth_file():
+    with open(auth_file_path, 'rb') as auth_file:
+        auth_data = auth_file.read()
+    cipher_suite = Fernet(encryption_key)
+    encrypted_data = cipher_suite.encrypt(auth_data)
+    with open(auth_file_path + '.encrypted', 'wb') as encrypted_file:
+        encrypted_file.write(encrypted_data)
+
+# Decrypt the authentication file and set os.environ
+def decrypt_auth_file_and_set_env():
+    with open(auth_file_path + '.encrypted', 'rb') as encrypted_file:
+        encrypted_data = encrypted_file.read()
+    cipher_suite = Fernet(encryption_key)
+    decrypted_data = cipher_suite.decrypt(encrypted_data)
+    auth_data = decrypted_data.decode('utf-8')
+    auth_content = json.loads(auth_data)
+    
+    # Set environment variables
+    for key, value in auth_content.items():
+        os.environ[key] = str(value)
+
+# Example usage
+encrypt_auth_file()
+decrypt_auth_file_and_set_env()
