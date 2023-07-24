@@ -1,0 +1,31 @@
+import jiwer
+
+def is_critical(word, critical_info_list):
+    return word in critical_info_list
+
+def calculate_wer_with_custom_weights(reference, generated, critical_info_list, weight_critical=1.5, weight_non_critical=1.0):
+    # Tokenize the reference and generated transcripts into words
+    ref_tokens = reference.lower().split()
+    gen_tokens = generated.lower().split()
+
+    # Create a reference and hypothesis lists with custom weights for each word
+    ref_hyp_list = []
+    for word in ref_tokens:
+        if is_critical(word, critical_info_list):
+            ref_hyp_list.append((word, weight_critical))
+        else:
+            ref_hyp_list.append((word, weight_non_critical))
+
+    hyp_weighted_list = [(word, weight_non_critical) for word in gen_tokens]
+
+    # Calculate WER using JIWER's wer function
+    wer = jiwer.wer(ref_hyp_list, hyp_weighted_list)
+
+    return wer
+
+# Example usage:
+reference_transcript = "the quick brown fox jumps over the lazy dog"
+generated_transcript = "the quick fox jumps the really lazy dog"
+critical_info_list = ['brown', 'dog']
+wer = calculate_wer_with_custom_weights(reference_transcript, generated_transcript, critical_info_list, weight_critical=1.5, weight_non_critical=1.0)
+print("Word Error Rate (WER): {:.2%}".format(wer))
