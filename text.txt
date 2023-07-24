@@ -1,35 +1,50 @@
-import os
-import json
-from cryptography.fernet import Fernet
+def calculate_wer(reference, generated):
+    # Tokenize the reference and generated transcripts into words
+    ref_tokens = reference.lower().split()
+    gen_tokens = generated.lower().split()
 
-# Path to your authentication file
-auth_file_path = 'path_to_your_auth_file.json'
+    # Calculate Levenshtein distance using dynamic programming
+    dp = [[0] * (len(gen_tokens) + 1) for _ in range(len(ref_tokens) + 1)]
+    for i in range(len(ref_tokens) + 1):
+        dp[i][0] = i
+    for j in range(len(gen_tokens) + 1):
+        dp[0][j] = j
+    for i in range(1, len(ref_tokens) + 1):
+        for j in range(1, len(gen_tokens) + 1):
+            if ref_tokens[i - 1] == gen_tokens[j - 1]:
+                dp[i][j] = dp[i - 1][j - 1]
+            else:
+                dp[i][j] = 1 + min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])
 
-# Encryption key (replace with your own key)
-encryption_key = b'your_encryption_key'
+    # Backtrace to classify errors (insertions, deletions, substitutions)
+    insertions, deletions, substitutions = 0, 0, 0
+    i, j = len(ref_tokens), len(gen_tokens)
+    while i > 0 and j > 0:
+        if ref_tokens[i - 1] == gen_tokens[j - 1]:
+            i -= 1
+            j -= 1
+        else:
+            if dp[i][j] == dp[i - 1][j - 1] + 1:
+                substitutions += 1
+                i -= 1
+                j -= 1
+            elif dp[i][j] == dp[i][j - 1] + 1:
+                insertions += 1
+                j -= 1
+            else:
+                deletions += 1
+                i -= 1
 
-# Encrypt the authentication file
-def encrypt_auth_file():
-    with open(auth_file_path, 'rb') as auth_file:
-        auth_data = auth_file.read()
-    cipher_suite = Fernet(encryption_key)
-    encrypted_data = cipher_suite.encrypt(auth_data)
-    with open(auth_file_path + '.encrypted', 'wb') as encrypted_file:
-        encrypted_file.write(encrypted_data)
+    # Handle any remaining tokens in the reference or generated transcript
+    insertions += j
+    deletions += i
 
-# Decrypt the authentication file and set os.environ
-def decrypt_auth_file_and_set_env():
-    with open(auth_file_path + '.encrypted', 'rb') as encrypted_file:
-        encrypted_data = encrypted_file.read()
-    cipher_suite = Fernet(encryption_key)
-    decrypted_data = cipher_suite.decrypt(encrypted_data)
-    auth_data = decrypted_data.decode('utf-8')
-    auth_content = json.loads(auth_data)
-    
-    # Set environment variables
-    for key, value in auth_content.items():
-        os.environ[key] = str(value)
+    # Compute WER
+    wer = (insertions + deletions + substitutions) / len(ref_tokens)
+    return wer
 
-# Example usage
-encrypt_auth_file()
-decrypt_auth_file_and_set_env()
+# Example usage:
+reference_transcript = "the quick brown fox jumps over the lazy dog"
+generated_transcript = "the quick fox jumps the lazy dog"
+wer = calculate_wer(reference_transcript, generated_transcript)
+print("Word Error Rate (WER): {:.2%}".format(wer))
