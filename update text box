@@ -26,31 +26,33 @@ def calculate_wer_with_custom_weights(reference, generated, weight_critical=1.5,
         else:
             if dp[i][j] == dp[i - 1][j - 1] + 1:
                 if gen_tokens[j - 1] in ref_tokens:
-                    substitutions += 1
+                    # Substitution
+                    substitutions += weight_critical if is_critical(gen_tokens[j - 1]) else weight_non_critical
                 else:
-                    # Check if the inserted word is critical or non-critical
-                    # You may have a custom function to determine this based on the word itself.
-                    inserted_word = gen_tokens[j - 1]
-                    if is_critical(inserted_word):
-                        insertions += weight_critical
-                    else:
-                        insertions += weight_non_critical
+                    # Insertion
+                    insertions += weight_critical if is_critical(gen_tokens[j - 1]) else weight_non_critical
                 i -= 1
                 j -= 1
             elif dp[i][j] == dp[i][j - 1] + 1:
-                # The inserted word is always an insertion
-                insertions += weight_non_critical  # You may choose a custom weight for non-critical insertions.
+                # Insertion
+                insertions += weight_critical if is_critical(gen_tokens[j - 1]) else weight_non_critical
                 j -= 1
             else:
-                deletions += 1
+                # Deletion
+                deletions += weight_critical if is_critical(ref_tokens[i - 1]) else weight_non_critical
                 i -= 1
 
     # Handle any remaining tokens in the reference or generated transcript
-    insertions += j
-    deletions += i
+    while i > 0:
+        deletions += weight_critical if is_critical(ref_tokens[i - 1]) else weight_non_critical
+        i -= 1
+    while j > 0:
+        insertions += weight_critical if is_critical(gen_tokens[j - 1]) else weight_non_critical
+        j -= 1
 
     # Compute WER
-    wer = (insertions + deletions + substitutions) / len(ref_tokens)
+    total_words = len(ref_tokens)
+    wer = (insertions + deletions + substitutions) / total_words
     return wer
 
 # Example usage:
