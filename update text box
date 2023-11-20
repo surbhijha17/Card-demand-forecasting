@@ -119,10 +119,15 @@ class SpeechRecognitionApp:
         self.text_widget.pack(padx=10, pady=10)
 
         self.text_queue = Queue()
+        self.recording_button = tk.Button(root, text="Start Recording", command=self.start_recording)
+        self.recording_button.pack(pady=10)
+
+        self.stream_thread = None
+
+    def start_recording(self):
+        self.recording_button.config(state=tk.DISABLED)
         self.stream_thread = threading.Thread(target=self.start_streaming)
         self.stream_thread.start()
-
-        self.update_text_widget()
 
     def start_streaming(self):
         client = speech.SpeechClient()
@@ -145,6 +150,8 @@ class SpeechRecognitionApp:
             responses = client.streaming_recognize(streaming_config, requests)
             for transcript in self.listen_print_loop(responses, stream):
                 self.text_queue.put(transcript)
+
+        self.recording_button.config(state=tk.NORMAL)
 
     def listen_print_loop(self, responses, stream):
         last_transcript = ""
