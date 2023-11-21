@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QTextEdit
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread, pyqtSignal
 from google.cloud import speech
 import queue
 import re
@@ -15,12 +15,6 @@ CHUNK_SIZE = int(SAMPLE_RATE / 10)  # 100ms
 RED = "\033[0;31m"
 GREEN = "\033[0;32m"
 YELLOW = "\033[0;33m"
-
-
-class ResumableMicrophoneStream:
-    # ... (rest of the ResumableMicrophoneStream class remains the same)
-
-    # ... (rest of the code remains the same until the main function)
 
 class SpeechRecognitionApp(QWidget):
     def __init__(self):
@@ -48,25 +42,29 @@ class SpeechRecognitionApp(QWidget):
 
     def start_recording(self):
         self.transcript_text.clear()
-        self.thread = TranscriptionThread(self.transcript_text)
+        self.thread = TranscriptionThread()
+        self.thread.transcription_update.connect(self.update_transcription)
         self.thread.start()
 
     def stop_recording(self):
         if hasattr(self, 'thread'):
             self.thread.stop_recognition()
 
+    def update_transcription(self, transcript):
+        self.transcript_text.append(transcript)
+
 
 class TranscriptionThread(QThread):
-    def __init__(self, transcript_text_widget):
+    transcription_update = pyqtSignal(str)
+
+    def __init__(self):
         super().__init__()
-        self.transcript_text_widget = transcript_text_widget
         self.stream = None
         self.client = speech.SpeechClient()
 
     def run(self):
         self.stream = ResumableMicrophoneStream(SAMPLE_RATE, CHUNK_SIZE)
         with self.stream as audio_stream:
-            self.transcript_text_widget.clear()
             while not self.stream.closed:
                 audio_generator = audio_stream.generator()
                 requests = (
@@ -78,7 +76,7 @@ class TranscriptionThread(QThread):
                 )
                 transcript = listen_print_loop(responses, audio_stream)
                 if transcript:
-                    self.transcript_text_widget.append(transcript)
+                    self.transcription_update.emit(transcript)
                 time.sleep(0.1)
 
     def stop_recognition(self):
