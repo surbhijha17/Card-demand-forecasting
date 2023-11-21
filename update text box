@@ -1,12 +1,26 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QTextEdit
+from PyQt5.QtCore import QThread
 from google.cloud import speech
 import queue
 import re
 import time
 import pyaudio
 
-# ... (the rest of the code remains the same until the main function)
+# Audio recording parameters
+STREAMING_LIMIT = 240000  # 4 minutes
+SAMPLE_RATE = 16000
+CHUNK_SIZE = int(SAMPLE_RATE / 10)  # 100ms
+
+RED = "\033[0;31m"
+GREEN = "\033[0;32m"
+YELLOW = "\033[0;33m"
+
+
+class ResumableMicrophoneStream:
+    # ... (rest of the ResumableMicrophoneStream class remains the same)
+
+    # ... (rest of the code remains the same until the main function)
 
 class SpeechRecognitionApp(QWidget):
     def __init__(self):
