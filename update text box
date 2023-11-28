@@ -226,3 +226,24 @@ class SpeechApp:
     def check_queue(self):
         try:
             entry = self.transcript_queue.get_nowait()
+            self.transcript_text.insert(tk.END, entry + "\n")
+
+            if "Agent" in entry:
+                self.transcript_text.tag_config("agent", foreground="blue")
+                self.transcript_text.insert(tk.END, self.agent_transcript + "\n", "agent")
+            elif "Customer" in entry:
+                self.transcript_text.tag_config("customer", foreground="green")
+                self.transcript_text.insert(tk.END, self.customer_transcript + "\n", "customer")
+
+            self.transcript_text.yview(tk.END)
+        except Queue.Empty:
+            pass
+        self.root.after(100, self.check_queue)
+
+def main():
+    root = tk.Tk()
+    app = SpeechApp(root)
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
