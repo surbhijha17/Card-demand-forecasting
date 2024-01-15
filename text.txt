@@ -1,44 +1,50 @@
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.*;
+import win32com.client
 
-public class SplitExample {
-    public static List<Integer> extractNumbers(String input) {
-        Pattern pattern = Pattern.compile("(?:Ass|inc)\\s*:\\s*(\\d+)");
-        Matcher matcher = pattern.matcher(input);
+def embed_outlook_item_into_ppt(item_subject, pptx_path):
+    # Connect to Outlook
+    outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
 
-        List<Integer> output = new ArrayList<>();
-        while (matcher.find()) {
-            int number = Integer.parseInt(matcher.group(1));
-            output.add(number);
-        }
+    # Get the Outlook item by subject
+    outlook_item = None
+    for folder in outlook.Folders:
+        for item in folder.Items:
+            if item.Subject == item_subject:
+                outlook_item = item
+                break
+        if outlook_item:
+            break
 
-        return output;
-    }
+    if not outlook_item:
+        print(f"Outlook item with subject '{item_subject}' not found.")
+        return
 
-    public static void main(String[] args) {
-        String input1 = "Ass | inc :1234 | Ass | inc :1235 | Ass | inc :1236";
-        String input2 = "Ass | inc :1234 | type :1235 | Ass | inc :1236";
-        String input3 = "Ass | inc :1234 | type :1235 | ";
-        String input4 = "Ass inc :1234 | Ass inc :1235 | Ass inc :1236";
-        String input5 = "Ass inc :1234 | type :1235 | Ass inc :1236";
-        String input6 = "Assinc :1234 | Ass inc :1235 | Ass inc :1236";
-        String input7 = "Assinc :1234 | Ass:1235 | Ass inc :1236";
+    # Create PowerPoint presentation
+    ppt = win32com.client.Dispatch("PowerPoint.Application")
+    ppt.Visible = True  # Set to False if you don't want PowerPoint to be visible during the process
 
-        List<Integer> output1 = extractNumbers(input1);
-        List<Integer> output2 = extractNumbers(input2);
-        List<Integer> output3 = extractNumbers(input3);
-        List<Integer> output4 = extractNumbers(input4);
-        List<Integer> output5 = extractNumbers(input5);
-        List<Integer> output6 = extractNumbers(input6);
-        List<Integer> output7 = extractNumbers(input7);
+    presentation = ppt.Presentations.Add()
 
-        System.out.println(output1); // Output: [1234, 1235, 1236]
-        System.out.println(output2); // Output: [1234, 1236]
-        System.out.println(output3); // Output: [1234]
-        System.out.println(output4); // Output: [1234, 1235, 1236]
-        System.out.println(output5); // Output: [1234, 1236]
-        System.out.println(output6); // Output: [1234, 1235, 1236]
-        System.out.println(output7); // Output: [1234, 1235, 1236]
-    }
-}
+    # Add a blank slide
+    slide = presentation.Slides.Add(1, 2)  # Using index 2 for a blank layout
+
+    # Insert the Outlook item as an OLE object
+    ole_object = slide.Shapes.AddOLEObject(
+        ClassType="Outlook.Application",
+        FileName="",
+        DisplayAsIcon=True,
+        IconFileName=outlook_item.Subject,
+        IconIndex=0,
+        IconLabel=outlook_item.Subject,
+    )
+
+    # Save the PowerPoint presentation
+    presentation.SaveAs(pptx_path)
+
+    # Close PowerPoint
+    ppt.Quit()
+
+if __name__ == "__main__":
+    outlook_item_subject = "Your Outlook Item Subject"
+    pptx_file_path = "output_presentation.pptx"
+
+    embed_outlook_item_into_ppt(outlook_item_subject, pptx_file_path)
