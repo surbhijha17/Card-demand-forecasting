@@ -1,31 +1,58 @@
-import jiwer
+from pptx import Presentation
+import win32com.client
 
-def is_critical(word, critical_info_list):
-    return word in critical_info_list
+def copy_slide_content(source_slide, target_ppt):
+    # Add a new slide to the target presentation
+    target_slide = target_ppt.Slides.Add(source_slide.slide_layout.slide_master)
 
-def calculate_wer_with_custom_weights(reference, generated, critical_info_list, weight_critical=1.5, weight_non_critical=1.0):
-    # Tokenize the reference and generated transcripts into words
-    ref_tokens = reference.lower().split()
-    gen_tokens = generated.lower().split()
+    # Iterate through shapes in the source slide
+    for shape in source_slide.shapes:
+        # Copy the shape to the target slide
+        target_shape = target_slide.Shapes.AddShape(
+            Type=shape.auto_shape_type,
+            Left=shape.left,
+            Top=shape.top,
+            Width=shape.width,
+            Height=shape.height,
+        )
 
-    # Create a reference and hypothesis lists with custom weights for each word
-    ref_hyp_list = []
-    for word in ref_tokens:
-        if is_critical(word, critical_info_list):
-            ref_hyp_list.append((word, weight_critical))
-        else:
-            ref_hyp_list.append((word, weight_non_critical))
+        # Copy text if the shape has text
+        if shape.has_text_frame:
+            target_shape.TextFrame.TextRange.Text = shape.text
 
-    hyp_weighted_list = [(word, weight_non_critical) for word in gen_tokens]
+            # Copy formatting (you might need to adjust this based on your needs)
+            target_shape.TextFrame.TextRange.Font.Bold = shape.text_frame.paragraphs[0].runs[0].font.bold
+            target_shape.TextFrame.TextRange.Font.Italic = shape.text_frame.paragraphs[0].runs[0].font.italic
+            target_shape.TextFrame.TextRange.Font.Size = int(shape.text_frame.paragraphs[0].runs[0].font.size.pt)
+            # Add more formatting properties as needed
 
-    # Calculate WER using JIWER's wer function
-    wer = jiwer.wer(ref_hyp_list, hyp_weighted_list)
+    return target_slide
 
-    return wer
+def copy_pptx_to_pywin32(pptx_path, output_ppt_path):
+    # Open the PowerPoint presentation using python-pptx
+    pptx_presentation = Presentation(pptx_path)
 
-# Example usage:
-reference_transcript = "the quick brown fox jumps over the lazy dog"
-generated_transcript = "the quick fox jumps the really lazy dog"
-critical_info_list = ['brown', 'dog']
-wer = calculate_wer_with_custom_weights(reference_transcript, generated_transcript, critical_info_list, weight_critical=1.5, weight_non_critical=1.0)
-print("Word Error Rate (WER): {:.2%}".format(wer))
+    # Create a PowerPoint application using win32com
+    powerpoint = win32com.client.Dispatch("PowerPoint.Application")
+    powerpoint.Visible = True  # Set to True if you want PowerPoint to be visible
+
+    # Create a new PowerPoint presentation using win32com
+    output_ppt = powerpoint.Presentations.Add()
+
+    # Iterate through slides in the source presentation
+    for pptx_slide in pptx_presentation.slides:
+        # Copy the content of the slide to the new presentation
+        copy_slide_content(pptx_slide, output_ppt)
+
+    # Save the new PowerPoint presentation
+    output_ppt.SaveAs(output_ppt_path)
+
+    # Close PowerPoint
+    output_ppt.Close()
+    powerpoint.Quit()
+
+if __name__ == "__main__":
+    input_pptx_path = "your_input_presentation.pptx"
+    output_ppt_path = "output_presentation.pptx"
+
+    copy_pptx_to_pywin32(input_pptx_path, output_ppt_path)
