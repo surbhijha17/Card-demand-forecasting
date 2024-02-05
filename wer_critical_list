@@ -1,30 +1,56 @@
 from pptx import Presentation
 import win32com.client
 
-def copy_slide_content(source_slide, target_ppt):
-    # Add a new slide to the target presentation
-    target_slide = target_ppt.Slides.Add(source_slide.slide_layout.slide_master)
+def get_slide_layout_index(slide):
+    # Get the layout index of the slide
+    try:
+        return slide.slide_layout.slide_master.CustomLayoutIndex
+    except AttributeError:
+        # If the slide does not have a custom layout, fall back to the default layout
+        return slide.slide_layout.slide_master.MasterId
 
-    # Iterate through shapes in the source slide
-    for shape in source_slide.shapes:
-        # Copy the shape to the target slide
-        target_shape = target_slide.Shapes.AddShape(
-            Type=shape.auto_shape_type,
+def copy_shape(shape, target_slide):
+    # Copy the shape to the target slide
+    if shape.has_text_frame:
+        target_shape = target_slide.Shapes.AddTextbox(
+            Orientation=shape.rotation,
             Left=shape.left,
             Top=shape.top,
             Width=shape.width,
             Height=shape.height,
         )
+        target_shape.TextFrame.TextRange.Text = shape.text
 
-        # Copy text if the shape has text
-        if shape.has_text_frame:
-            target_shape.TextFrame.TextRange.Text = shape.text
+        # Copy formatting (you might need to adjust this based on your needs)
+        target_shape.TextFrame.TextRange.Font.Bold = shape.text_frame.paragraphs[0].runs[0].font.bold
+        target_shape.TextFrame.TextRange.Font.Italic = shape.text_frame.paragraphs[0].runs[0].font.italic
+        target_shape.TextFrame.TextRange.Font.Size = int(shape.text_frame.paragraphs[0].runs[0].font.size.pt)
+        # Add more formatting properties as needed
+    else:
+        # For non-text shapes, copy as picture
+        target_shape = target_slide.Shapes.AddPicture(
+            FileName=shape.image.filename,
+            LinkToFile=False,
+            SaveWithDocument=True,
+            Left=shape.left,
+            Top=shape.top,
+            Width=shape.width,
+            Height=shape.height
+        )
 
-            # Copy formatting (you might need to adjust this based on your needs)
-            target_shape.TextFrame.TextRange.Font.Bold = shape.text_frame.paragraphs[0].runs[0].font.bold
-            target_shape.TextFrame.TextRange.Font.Italic = shape.text_frame.paragraphs[0].runs[0].font.italic
-            target_shape.TextFrame.TextRange.Font.Size = int(shape.text_frame.paragraphs[0].runs[0].font.size.pt)
-            # Add more formatting properties as needed
+    return target_shape
+
+def copy_slide_content(source_slide, target_ppt):
+    # Get the layout index of the source slide
+    layout_index = get_slide_layout_index(source_slide)
+
+    # Add a new slide to the target presentation using the same layout
+    target_slide = target_ppt.Slides.Add(layout_index)
+
+    # Iterate through shapes in the source slide
+    for shape in source_slide.shapes:
+        # Copy the shape to the target slide
+        copy_shape(shape, target_slide)
 
     return target_slide
 
