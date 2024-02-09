@@ -1,84 +1,38 @@
-from pptx import Presentation
 import win32com.client
 
-def get_slide_layout_index(slide):
-    # Get the layout index of the slide
-    try:
-        return slide.slide_layout.slide_master.CustomLayoutIndex
-    except AttributeError:
-        # If the slide does not have a custom layout, fall back to the default layout
-        return slide.slide_layout.slide_master.MasterId
+def copy_excel_to_powerpoint(excel_file_path, pptx_file_path, slide_index=1):
+    # Connect to Excel
+    excel_app = win32com.client.Dispatch("Excel.Application")
+    excel_app.Visible = True  # Set to True to make Excel visible
 
-def copy_shape(shape, target_slide):
-    # Copy the shape to the target slide
-    if shape.has_text_frame:
-        target_shape = target_slide.Shapes.AddTextbox(
-            Orientation=shape.rotation,
-            Left=shape.left,
-            Top=shape.top,
-            Width=shape.width,
-            Height=shape.height,
-        )
-        target_shape.TextFrame.TextRange.Text = shape.text
+    # Open the Excel workbook
+    workbook = excel_app.Workbooks.Open(excel_file_path)
 
-        # Copy formatting (you might need to adjust this based on your needs)
-        target_shape.TextFrame.TextRange.Font.Bold = shape.text_frame.paragraphs[0].runs[0].font.bold
-        target_shape.TextFrame.TextRange.Font.Italic = shape.text_frame.paragraphs[0].runs[0].font.italic
-        target_shape.TextFrame.TextRange.Font.Size = int(shape.text_frame.paragraphs[0].runs[0].font.size.pt)
-        # Add more formatting properties as needed
-    else:
-        # For non-text shapes, copy as picture
-        target_shape = target_slide.Shapes.AddPicture(
-            FileName=shape.image.filename,
-            LinkToFile=False,
-            SaveWithDocument=True,
-            Left=shape.left,
-            Top=shape.top,
-            Width=shape.width,
-            Height=shape.height
-        )
+    # Connect to PowerPoint
+    ppt_app = win32com.client.Dispatch("PowerPoint.Application")
+    ppt_app.Visible = True  # Set to True to make PowerPoint visible
 
-    return target_shape
+    # Open the PowerPoint presentation
+    presentation = ppt_app.Presentations.Open(pptx_file_path)
 
-def copy_slide_content(source_slide, target_ppt):
-    # Get the layout index of the source slide
-    layout_index = get_slide_layout_index(source_slide)
+    # Copy the Excel worksheet
+    workbook.Worksheets(1).Activate()
+    workbook.Worksheets(1).Cells.Select()
+    workbook.ActiveSheet.UsedRange.Copy()
 
-    # Add a new slide to the target presentation using the same layout
-    target_slide = target_ppt.Slides.Add(layout_index)
+    # Paste the content into the PowerPoint slide
+    slide = presentation.Slides(slide_index)
+    slide.Shapes.PasteSpecial(DataType=10)  # DataType 10 is for Microsoft Excel Worksheet Object
 
-    # Iterate through shapes in the source slide
-    for shape in source_slide.shapes:
-        # Copy the shape to the target slide
-        copy_shape(shape, target_slide)
+    # Save and close the PowerPoint presentation
+    presentation.Save()
+    presentation.Close()
 
-    return target_slide
+    # Quit both Excel and PowerPoint applications
+    excel_app.Quit()
+    ppt_app.Quit()
 
-def copy_pptx_to_pywin32(pptx_path, output_ppt_path):
-    # Open the PowerPoint presentation using python-pptx
-    pptx_presentation = Presentation(pptx_path)
-
-    # Create a PowerPoint application using win32com
-    powerpoint = win32com.client.Dispatch("PowerPoint.Application")
-    powerpoint.Visible = True  # Set to True if you want PowerPoint to be visible
-
-    # Create a new PowerPoint presentation using win32com
-    output_ppt = powerpoint.Presentations.Add()
-
-    # Iterate through slides in the source presentation
-    for pptx_slide in pptx_presentation.slides:
-        # Copy the content of the slide to the new presentation
-        copy_slide_content(pptx_slide, output_ppt)
-
-    # Save the new PowerPoint presentation
-    output_ppt.SaveAs(output_ppt_path)
-
-    # Close PowerPoint
-    output_ppt.Close()
-    powerpoint.Quit()
-
-if __name__ == "__main__":
-    input_pptx_path = "your_input_presentation.pptx"
-    output_ppt_path = "output_presentation.pptx"
-
-    copy_pptx_to_pywin32(input_pptx_path, output_ppt_path)
+# Example usage
+excel_file_path = 'path_to_your_excel_file.xlsx'
+pptx_file_path = 'path_to_your_pptx_file.pptx'
+copy_excel_to_powerpoint(excel_file_path, pptx_file_path)
