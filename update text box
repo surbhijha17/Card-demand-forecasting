@@ -21,13 +21,14 @@ metadata = {
     'Description': 'description'
 }
 
-# Function to extract relevant entities from user query using SpaCy
-def extract_entities(query):
+# Function to extract relevant entities and main noun phrases from user query using SpaCy
+def extract_entities_and_noun_phrases(query):
     doc = nlp(query)
     entities = [ent.text.lower() for ent in doc.ents]
-    return entities
+    noun_phrases = [chunk.text.lower() for chunk in doc.noun_chunks]
+    return entities + noun_phrases
 
-# Function to map query entities to dataframe columns
+# Function to map entities and noun phrases to dataframe columns
 def map_entities_to_column(entities):
     for entity in entities:
         for key, value in metadata.items():
@@ -37,8 +38,8 @@ def map_entities_to_column(entities):
 
 # Function to get value based on user query
 def get_value_based_on_query(query):
-    entities = extract_entities(query)
-    print("Entities:", entities)
+    entities = extract_entities_and_noun_phrases(query)
+    print("Entities and Noun Phrases:", entities)
     column = map_entities_to_column(entities)
     if column:
         relevant_data = df[column].values.tolist()
