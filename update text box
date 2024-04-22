@@ -1,249 +1,53 @@
-import tkinter as tk
-from tkinter import ttk, scrolledtext
-import threading
-from queue import Queue
-from google.cloud import speech
-import pyaudio
+import pandas as pd
+import string
+import spacy
 
-# Audio recording parameters
-STREAMING_LIMIT = 240000  # 4 minutes
-SAMPLE_RATE = 16000
-CHUNK_SIZE = int(SAMPLE_RATE / 10)  # 100ms
+# Load SpaCy English model
+nlp = spacy.load('en_core_web_sm')
 
-class ResumableMicrophoneStream:
-    def __init__(self, rate, chunk_size):
-        self._rate = rate
-        self.chunk_size = chunk_size
-        self._num_channels = 1
-        self._buff = Queue()
-        self.closed = True
-        self.start_time = self.get_current_time()
-        self.restart_counter = 0
-        self.audio_input = []
-        self.last_audio_input = []
-        self.result_end_time = 0
-        self.is_final_end_time = 0
-        self.final_request_end_time = 0
-        self.bridging_offset = 0
-        self.last_transcript_was_final = False
-        self.new_stream = True
-        self._audio_interface = pyaudio.PyAudio()
-        self._audio_stream = self._audio_interface.open(
-            format=pyaudio.paInt16,
-            channels=self._num_channels,
-            rate=self._rate,
-            input=True,
-            frames_per_buffer=self.chunk_size,
-            stream_callback=self._fill_buffer,
-        )
+# Sample DataFrame with metadata
+data = {
+    'Product': ['Apple iPhone 13', 'Samsung Galaxy S21', 'Google Pixel 6'],
+    'Price': [999, 899, 799],
+    'Release Year': [2021, 2021, 2021],
+    'Description': ['Latest iPhone model', 'Flagship Samsung phone', 'Google\'s newest Pixel']
+}
+df = pd.DataFrame(data)
 
-    def __enter__(self):
-        self.closed = False
-        return self
+# Preprocess metadata
+metadata = {
+    'Product': 'product name',
+    'Price': 'price',
+    'Release Year': 'release year',
+    'Description': 'description'
+}
 
-    def __exit__(self, type, value, traceback):
-        self._audio_stream.stop_stream()
-        self._audio_stream.close()
-        self.closed = True
-        self._buff.put(None)
-        self._audio_interface.terminate()
+# Function to extract relevant entities from user query using SpaCy
+def extract_entities(query):
+    doc = nlp(query)
+    entities = [ent.text.lower() for ent in doc.ents if ent.label_ in ['PRODUCT', 'DATE']]  # Extract product names and dates
+    return entities
 
-    def _fill_buffer(self, in_data, *args, **kwargs):
-        self._buff.put(in_data)
-        return None, pyaudio.paContinue
+# Function to map query to dataframe columns
+def map_query_to_column(query):
+    entities = extract_entities(query)
+    for entity in entities:
+        if entity in metadata.values():
+            for key, value in metadata.items():
+                if value == entity:
+                    return key
+    return None
 
-    def generator(self):
-        while not self.closed:
-            data = []
+# Function to get value based on user query
+def get_value_based_on_query(query):
+    column = map_query_to_column(query)
+    if column:
+        relevant_data = df[column].values.tolist()
+        return relevant_data
+    else:
+        return "Sorry, I couldn't understand your query."
 
-            if self.new_stream and self.last_audio_input:
-                chunk_time = STREAMING_LIMIT / len(self.last_audio_input)
-
-                if chunk_time != 0:
-                    if self.bridging_offset < 0:
-                        self.bridging_offset = 0
-
-                    if self.bridging_offset > self.final_request_end_time:
-                        self.bridging_offset = self.final_request_end_time
-
-                    chunks_from_ms = round(
-                        (self.final_request_end_time - self.bridging_offset)
-                        / chunk_time
-                    )
-
-                    self.bridging_offset = round(
-                        (len(self.last_audio_input) - chunks_from_ms) * chunk_time
-                    )
-
-                    for i in range(chunks_from_ms, len(self.last_audio_input)):
-                        data.append(self.last_audio_input[i])
-
-                self.new_stream = False
-
-            chunk = self._buff.get()
-            self.audio_input.append(chunk)
-
-            if chunk is None:
-                return
-            data.append(chunk)
-
-            while True:
-                try:
-                    chunk = self._buff.get(block=False)
-
-                    if chunk is None:
-                        return
-                    data.append(chunk)
-                    self.audio_input.append(chunk)
-
-                except Queue.Empty:
-                    break
-
-            yield b"".join(data)
-
-    @staticmethod
-    def get_current_time():
-        return int(round(time.time() * 1000))
-
-class SpeechApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Speech Recognition App")
-        self.root.geometry("800x600")
-
-        text_widget_frame = ttk.Frame(self.root)
-        text_widget_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
-
-        self.transcript_text = scrolledtext.ScrolledText(
-            text_widget_frame,
-            wrap=tk.WORD,
-            height=20,
-            width=40,
-            font=("Arial", 12),
-        )
-        self.transcript_text.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-
-        self.summary_text = scrolledtext.ScrolledText(
-            text_widget_frame,
-            wrap=tk.WORD,
-            height=10,
-            width=40,
-            font=("Arial", 12),
-        )
-        self.summary_text.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
-
-        button_frame = ttk.Frame(self.root)
-        button_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
-
-        self.record_agent_button = tk.Button(
-            button_frame,
-            text="Record Agent",
-            command=self.toggle_record_agent,
-            font=("Arial", 12),
-        )
-        self.record_agent_button.pack(side=tk.TOP, pady=5)
-
-        self.record_customer_button = tk.Button(
-            button_frame,
-            text="Record Customer",
-            command=self.toggle_record_customer,
-            font=("Arial", 12),
-        )
-        self.record_customer_button.pack(side=tk.TOP, pady=5)
-
-        self.summarize_button = tk.Button(
-            button_frame,
-            text="Summarize",
-            command=self.summarize,
-            font=("Arial", 12),
-        )
-        self.summarize_button.pack(side=tk.TOP, pady=5)
-
-        self.reset_button = tk.Button(
-            button_frame,
-            text="Reset Session",
-            command=self.reset_session,
-            font=("Arial", 12),
-        )
-        self.reset_button.pack(side=tk.TOP, pady=5)
-
-        self.transcript_queue = Queue()
-        self.client = speech.SpeechClient()
-        self.config = speech.RecognitionConfig(
-            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-            sample_rate_hertz=SAMPLE_RATE,
-            language_code="en-US",
-            max_alternatives=1,
-        )
-
-        self.streaming_config = speech.StreamingRecognitionConfig(
-            config=self.config, interim_results=True
-        )
-
-        self.agent_stream = ResumableMicrophoneStream(SAMPLE_RATE, CHUNK_SIZE)
-        self.customer_stream = ResumableMicrophoneStream(SAMPLE_RATE, CHUNK_SIZE)
-
-        self.agent_transcript = ""
-        self.customer_transcript = ""
-
-        self.agent_recording = False
-        self.customer_recording = False
-
-        self.agent_thread = threading.Thread(
-            target=self.process_stream, args=(self.agent_stream, "Agent")
-        )
-        self.customer_thread = threading.Thread(
-            target=self.process_stream, args=(self.customer_stream, "Customer")
-        )
-
-        self.root.after(100, self.check_queue)
-
-    def toggle_record_agent(self):
-        self.agent_recording = not self.agent_recording
-        if self.agent_recording:
-            self.record_agent_button.config(text="Stop Agent", bg="red", fg="white")
-            threading.Thread(target=self.agent_thread.start()).start()
-        else:
-            self.record_agent_button.config(text="Record Agent", bg="SystemButtonFace", fg="black")
-
-    def toggle_record_customer(self):
-        self.customer_recording = not self.customer_recording
-        if self.customer_recording:
-            self.record_customer_button.config(text="Stop Customer", bg="red", fg="white")
-            threading.Thread(target=self.customer_thread.start()).start()
-        else:
-            self.record_customer_button.config(text="Record Customer", bg="SystemButtonFace", fg="black")
-
-    def summarize(self):
-        pass
-
-    def reset_session(self):
-        pass
-
-    def process_stream(self, stream, name):
-        pass
-
-    def check_queue(self):
-        try:
-            entry = self.transcript_queue.get_nowait()
-            self.transcript_text.insert(tk.END, entry + "\n")
-
-            if "Agent" in entry:
-                self.transcript_text.tag_config("agent", foreground="blue")
-                self.transcript_text.insert(tk.END, self.agent_transcript + "\n", "agent")
-            elif "Customer" in entry:
-                self.transcript_text.tag_config("customer", foreground="green")
-                self.transcript_text.insert(tk.END, self.customer_transcript + "\n", "customer")
-
-            self.transcript_text.yview(tk.END)
-        except Queue.Empty:
-            pass
-        self.root.after(100, self.check_queue)
-
-def main():
-    root = tk.Tk()
-    app = SpeechApp(root)
-    root.mainloop()
-
-if __name__ == "__main__":
-    main()
+# Example usage
+user_query = "What is the price of the latest Samsung phone?"
+value = get_value_based_on_query(user_query)
+print("Response:", value)
