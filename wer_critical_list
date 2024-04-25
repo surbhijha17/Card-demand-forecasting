@@ -1,29 +1,37 @@
 import pandas as pd
-import numpy as np
+from openpyxl import load_workbook
 
-# Creating dummy dataframes
-df1 = pd.DataFrame(np.random.randint(0, 100, size=(5, 3)), columns=['A', 'B', 'C'])
-df2 = pd.DataFrame(np.random.randint(0, 100, size=(5, 3)), columns=['D', 'E', 'F'])
-df3 = pd.DataFrame(np.random.randint(0, 100, size=(5, 3)), columns=['G', 'H', 'I'])
-df4 = pd.DataFrame(np.random.randint(0, 100, size=(5, 3)), columns=['J', 'K', 'L'])
-df5 = pd.DataFrame(np.random.randint(0, 100, size=(5, 3)), columns=['M', 'N', 'O'])
-df6 = pd.DataFrame(np.random.randint(0, 100, size=(5, 3)), columns=['P', 'Q', 'R'])
+# Assuming you have n dataframes named df1, df2, ..., dfn
 
 # List of dataframes
-dataframes = [df1, df2, df3, df4, df5, df6]
+dataframes = [df1, df2, df3, df4, df5, df6]  # Add more dataframes as needed
 
-# Define the ExcelWriter object
-with pd.ExcelWriter('output.xlsx') as writer:
-    # Counter to keep track of current dataframe
-    counter = 0
+# Load the existing Excel file
+excel_file = 'existing.xlsx'  # Replace 'existing.xlsx' with your existing file name
+book = load_workbook(excel_file)
+writer = pd.ExcelWriter(excel_file, engine='openpyxl')
+writer.book = book
+
+# Starting row and column index
+start_row = 1
+start_col = 1
+
+# Counter to keep track of current dataframe
+counter = 0
+
+# Loop through dataframes two at a time
+while counter < len(dataframes):
+    # Concatenate two dataframes horizontally
+    df_concat = pd.concat([dataframes[counter], dataframes[counter+1]], axis=1)
     
-    # Loop through dataframes two at a time
-    while counter < len(dataframes):
-        # Concatenate two dataframes horizontally
-        df_concat = pd.concat([dataframes[counter], dataframes[counter+1]], axis=1)
-        
-        # Write the concatenated dataframe to Excel
-        df_concat.to_excel(writer, sheet_name=f'Dataframes {counter+1}-{counter+2}', index=False)
-        
-        # Increment counter
-        counter += 2
+    # Write the concatenated dataframe to Excel
+    df_concat.to_excel(writer, sheet_name='Sheet1', startrow=start_row, startcol=start_col, index=False, header=False)
+    
+    # Increment row for the next pair of dataframes
+    start_row += max(dataframes[counter].shape[0], dataframes[counter+1].shape[0]) + 1
+    
+    # Increment counter
+    counter += 2
+
+# Save changes to the Excel file
+writer.save()
