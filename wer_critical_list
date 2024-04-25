@@ -1,38 +1,29 @@
-import win32com.client
+import pandas as pd
+import numpy as np
 
-def copy_excel_to_powerpoint(excel_file_path, pptx_file_path, slide_index=1):
-    # Connect to Excel
-    excel_app = win32com.client.Dispatch("Excel.Application")
-    excel_app.Visible = True  # Set to True to make Excel visible
+# Creating dummy dataframes
+df1 = pd.DataFrame(np.random.randint(0, 100, size=(5, 3)), columns=['A', 'B', 'C'])
+df2 = pd.DataFrame(np.random.randint(0, 100, size=(5, 3)), columns=['D', 'E', 'F'])
+df3 = pd.DataFrame(np.random.randint(0, 100, size=(5, 3)), columns=['G', 'H', 'I'])
+df4 = pd.DataFrame(np.random.randint(0, 100, size=(5, 3)), columns=['J', 'K', 'L'])
+df5 = pd.DataFrame(np.random.randint(0, 100, size=(5, 3)), columns=['M', 'N', 'O'])
+df6 = pd.DataFrame(np.random.randint(0, 100, size=(5, 3)), columns=['P', 'Q', 'R'])
 
-    # Open the Excel workbook
-    workbook = excel_app.Workbooks.Open(excel_file_path)
+# List of dataframes
+dataframes = [df1, df2, df3, df4, df5, df6]
 
-    # Connect to PowerPoint
-    ppt_app = win32com.client.Dispatch("PowerPoint.Application")
-    ppt_app.Visible = True  # Set to True to make PowerPoint visible
-
-    # Open the PowerPoint presentation
-    presentation = ppt_app.Presentations.Open(pptx_file_path)
-
-    # Copy the Excel worksheet
-    workbook.Worksheets(1).Activate()
-    workbook.Worksheets(1).Cells.Select()
-    workbook.ActiveSheet.UsedRange.Copy()
-
-    # Paste the content into the PowerPoint slide
-    slide = presentation.Slides(slide_index)
-    slide.Shapes.PasteSpecial(DataType=10)  # DataType 10 is for Microsoft Excel Worksheet Object
-
-    # Save and close the PowerPoint presentation
-    presentation.Save()
-    presentation.Close()
-
-    # Quit both Excel and PowerPoint applications
-    excel_app.Quit()
-    ppt_app.Quit()
-
-# Example usage
-excel_file_path = 'path_to_your_excel_file.xlsx'
-pptx_file_path = 'path_to_your_pptx_file.pptx'
-copy_excel_to_powerpoint(excel_file_path, pptx_file_path)
+# Define the ExcelWriter object
+with pd.ExcelWriter('output.xlsx') as writer:
+    # Counter to keep track of current dataframe
+    counter = 0
+    
+    # Loop through dataframes two at a time
+    while counter < len(dataframes):
+        # Concatenate two dataframes horizontally
+        df_concat = pd.concat([dataframes[counter], dataframes[counter+1]], axis=1)
+        
+        # Write the concatenated dataframe to Excel
+        df_concat.to_excel(writer, sheet_name=f'Dataframes {counter+1}-{counter+2}', index=False)
+        
+        # Increment counter
+        counter += 2
