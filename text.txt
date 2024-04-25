@@ -1,50 +1,15 @@
-import win32com.client
+import pandas as pd
 
-def embed_outlook_item_into_ppt(item_subject, pptx_path):
-    # Connect to Outlook
-    outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
+# Sample DataFrame
+data = {'A': [1000.123456789, -2000.987654321],
+        'B': [123456, -987654]}
+df = pd.DataFrame(data)
 
-    # Get the Outlook item by subject
-    outlook_item = None
-    for folder in outlook.Folders:
-        for item in folder.Items:
-            if item.Subject == item_subject:
-                outlook_item = item
-                break
-        if outlook_item:
-            break
+# Define the custom format string
+custom_format = '{:,.2f};({:,.2f});-'
 
-    if not outlook_item:
-        print(f"Outlook item with subject '{item_subject}' not found.")
-        return
+# Apply custom formatting to all columns
+styled_df = df.style.format(custom_format)
 
-    # Create PowerPoint presentation
-    ppt = win32com.client.Dispatch("PowerPoint.Application")
-    ppt.Visible = True  # Set to False if you don't want PowerPoint to be visible during the process
-
-    presentation = ppt.Presentations.Add()
-
-    # Add a blank slide
-    slide = presentation.Slides.Add(1, 2)  # Using index 2 for a blank layout
-
-    # Insert the Outlook item as an OLE object
-    ole_object = slide.Shapes.AddOLEObject(
-        ClassType="Outlook.Application",
-        FileName="",
-        DisplayAsIcon=True,
-        IconFileName=outlook_item.Subject,
-        IconIndex=0,
-        IconLabel=outlook_item.Subject,
-    )
-
-    # Save the PowerPoint presentation
-    presentation.SaveAs(pptx_path)
-
-    # Close PowerPoint
-    ppt.Quit()
-
-if __name__ == "__main__":
-    outlook_item_subject = "Your Outlook Item Subject"
-    pptx_file_path = "output_presentation.pptx"
-
-    embed_outlook_item_into_ppt(outlook_item_subject, pptx_file_path)
+# Display the styled DataFrame
+styled_df
