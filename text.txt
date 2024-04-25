@@ -5,8 +5,14 @@ data = {'A': [1000.123456789, -2000.987654321],
         'B': [123456, -987654]}
 df = pd.DataFrame(data)
 
-# Define the custom format string
-custom_format = '{:,.2f};({:,.2f});-'
+# Define custom formatting function
+def custom_format(x):
+    if x > 0:
+        return '{:,.2f}'.format(x)
+    elif x < 0:
+        return '({:,.2f})'.format(abs(x))
+    else:
+        return '-'
 
 # Apply custom formatting to all columns
 styled_df = df.style.format(custom_format)
