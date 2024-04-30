@@ -26,11 +26,12 @@ def main():
         column_c_options = df['Column_C'].unique()
 
     if options_generated:
-        selected_values = {
-            'column_a': st.sidebar.multiselect("Select values for Column A", column_a_options, default=column_a_options[:2]),
-            'column_b': st.sidebar.multiselect("Select values for Column B", column_b_options, default=column_b_options[:2]),
-            'column_c': st.sidebar.multiselect("Select values for Column C", column_c_options, default=column_c_options[:2])
-        }
+        with st.sidebar.beta_expander("Filter Options", expanded=True):
+            selected_values = {
+                'column_a': st.multiselect("Select values for Column A", column_a_options, default=column_a_options[:2]),
+                'column_b': st.multiselect("Select values for Column B", column_b_options, default=column_b_options[:2]),
+                'column_c': st.multiselect("Select values for Column C", column_c_options, default=column_c_options[:2])
+            }
 
         if st.sidebar.button("Generate"):
             if options_generated:
