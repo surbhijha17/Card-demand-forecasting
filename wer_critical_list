@@ -10,29 +10,33 @@ def filter_dataframe(df, selected_values):
 def main():
     st.title('Data Filter App')
     
-    uploaded_file = st.file_uploader("Upload Excel file", type=["xlsx", "xls"])
-    if uploaded_file is not None:
+    uploaded_file = st.sidebar.file_uploader("Upload Excel file", type=["xlsx", "xls"])
+    input_year = st.sidebar.text_input("Input Year:")
+    input_quarter = st.sidebar.text_input("Input Quarter:")
+
+    options_generated = False
+    if uploaded_file is not None and input_year and input_quarter:
+        options_generated = True
         df = pd.read_excel(uploaded_file)
         st.write("Sample Data:")
         st.write(df.head())
-
-        input_year = st.text_input("Input Year:")
-        input_quarter = st.text_input("Input Quarter:")
 
         column_a_options = df['Column_A'].unique()
         column_b_options = df['Column_B'].unique()
         column_c_options = df['Column_C'].unique()
 
+    if options_generated:
         selected_values = {
-            'column_a': st.multiselect("Select values for Column A", column_a_options, default=column_a_options[:2]),
-            'column_b': st.multiselect("Select values for Column B", column_b_options, default=column_b_options[:2]),
-            'column_c': st.multiselect("Select values for Column C", column_c_options, default=column_c_options[:2])
+            'column_a': st.sidebar.multiselect("Select values for Column A", column_a_options, default=column_a_options[:2]),
+            'column_b': st.sidebar.multiselect("Select values for Column B", column_b_options, default=column_b_options[:2]),
+            'column_c': st.sidebar.multiselect("Select values for Column C", column_c_options, default=column_c_options[:2])
         }
 
-        if st.button("Generate"):
-            filtered_df = filter_dataframe(df, selected_values)
-            st.write("Filtered Data:")
-            st.write(filtered_df)
+        if st.sidebar.button("Generate"):
+            if options_generated:
+                filtered_df = filter_dataframe(df, selected_values)
+                st.write("Filtered Data:")
+                st.write(filtered_df)
 
 if __name__ == "__main__":
     main()
