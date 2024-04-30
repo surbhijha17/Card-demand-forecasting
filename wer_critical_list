@@ -1,29 +1,58 @@
+import streamlit as st
 import pandas as pd
-from openpyxl import load_workbook
 
-# Load the Excel template into a DataFrame
-excel_file = "template.xlsx"
-df = pd.read_excel(excel_file)
+# Function to read Excel file
+def read_excel(file):
+    df = pd.read_excel(file)
+    return df
 
-# Make updates to the DataFrame
-# For example, let's change the value in the first row and first column
-df.at[0, 'Column1'] = 'New Value'
+# Function to generate multi-select boxes based on DataFrame columns
+def generate_multiselect_boxes(df):
+    selected_options = {}
+    for column in df.columns:
+        selected_options[column] = st.multiselect(f"Select {column}", df[column].unique(), default=df[column].unique()[0])
+    return selected_options
 
-# Load the Excel template for styling
-wb = load_workbook(excel_file)
-sheet = wb.active
-styles = {}
-for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, min_col=1, max_col=sheet.max_column):
-    for cell in row:
-        styles[(cell.row, cell.column)] = cell.style
+# Main function to run when generate button is clicked
+def process_data(file, selected_year, selected_quarter, selected_options):
+    # Read Excel file
+    df = read_excel(file)
+    
+    # Filter data based on selected year and quarter
+    filtered_df = df[(df['Year'] == selected_year) & (df['Quarter'] == selected_quarter)]
+    
+    # Process data based on selected options
+    processed_data = filtered_df
+    for column, options in selected_options.items():
+        processed_data = processed_data[processed_data[column].isin(options)]
+    
+    # Perform some function (here, just displaying processed data)
+    st.write("Processed Data:")
+    st.write(processed_data)
 
-# Apply styling to the updated DataFrame
-styled_df = df.style
-for (row, col), style in styles.items():
-    styled_df = styled_df.applymap(lambda x: style if df.index[row - 1] == x else None, subset=pd.IndexSlice[row - 1, col - 1])
+# Streamlit app
+def main():
+    st.title("Data Processing App")
+    
+    # Input file
+    uploaded_file = st.file_uploader("Upload Excel file", type=["xlsx"])
+    
+    # Input year
+    input_year = st.text_input("Enter Year:")
+    
+    # Input quarter
+    input_quarter = st.selectbox("Select Quarter:", ["Q1", "Q2", "Q3", "Q4"])
+    
+    if uploaded_file is not None and st.button("Generate"):
+        # Read Excel file
+        df = read_excel(uploaded_file)
+        
+        # Generate multi-select boxes
+        selected_options = generate_multiselect_boxes(df[['A', 'B', 'C']])
+        
+        # Final input button to process data
+        if st.button("Process Data"):
+            process_data(uploaded_file, input_year, input_quarter, selected_options)
 
-# Save the updated DataFrame with styling to a new Excel file
-output_file = "updated_template.xlsx"
-with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
-    styled_df.to_excel(writer, index=False, sheet_name='Sheet1')
-    writer.save()
+if __name__ == "__main__":
+    main()
