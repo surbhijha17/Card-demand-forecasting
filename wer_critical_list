@@ -1,58 +1,38 @@
 import streamlit as st
 import pandas as pd
 
-# Function to read Excel file
-def read_excel(file):
-    df = pd.read_excel(file)
-    return df
+def filter_dataframe(df, selected_values):
+    filtered_df = df[df['Column_A'].isin(selected_values['column_a']) &
+                     df['Column_B'].isin(selected_values['column_b']) &
+                     df['Column_C'].isin(selected_values['column_c'])]
+    return filtered_df
 
-# Function to generate multi-select boxes based on DataFrame columns
-def generate_multiselect_boxes(df):
-    selected_options = {}
-    for column in df.columns:
-        selected_options[column] = st.multiselect(f"Select {column}", df[column].unique(), default=df[column].unique()[0])
-    return selected_options
-
-# Main function to run when generate button is clicked
-def process_data(file, selected_year, selected_quarter, selected_options):
-    # Read Excel file
-    df = read_excel(file)
-    
-    # Filter data based on selected year and quarter
-    filtered_df = df[(df['Year'] == selected_year) & (df['Quarter'] == selected_quarter)]
-    
-    # Process data based on selected options
-    processed_data = filtered_df
-    for column, options in selected_options.items():
-        processed_data = processed_data[processed_data[column].isin(options)]
-    
-    # Perform some function (here, just displaying processed data)
-    st.write("Processed Data:")
-    st.write(processed_data)
-
-# Streamlit app
 def main():
-    st.title("Data Processing App")
+    st.title('Data Filter App')
     
-    # Input file
-    uploaded_file = st.file_uploader("Upload Excel file", type=["xlsx"])
-    
-    # Input year
-    input_year = st.text_input("Enter Year:")
-    
-    # Input quarter
-    input_quarter = st.selectbox("Select Quarter:", ["Q1", "Q2", "Q3", "Q4"])
-    
-    if uploaded_file is not None and st.button("Generate"):
-        # Read Excel file
-        df = read_excel(uploaded_file)
-        
-        # Generate multi-select boxes
-        selected_options = generate_multiselect_boxes(df[['A', 'B', 'C']])
-        
-        # Final input button to process data
-        if st.button("Process Data"):
-            process_data(uploaded_file, input_year, input_quarter, selected_options)
+    uploaded_file = st.file_uploader("Upload Excel file", type=["xlsx", "xls"])
+    if uploaded_file is not None:
+        df = pd.read_excel(uploaded_file)
+        st.write("Sample Data:")
+        st.write(df.head())
+
+        input_year = st.text_input("Input Year:")
+        input_quarter = st.text_input("Input Quarter:")
+
+        column_a_options = df['Column_A'].unique()
+        column_b_options = df['Column_B'].unique()
+        column_c_options = df['Column_C'].unique()
+
+        selected_values = {
+            'column_a': st.multiselect("Select values for Column A", column_a_options, default=column_a_options[:2]),
+            'column_b': st.multiselect("Select values for Column B", column_b_options, default=column_b_options[:2]),
+            'column_c': st.multiselect("Select values for Column C", column_c_options, default=column_c_options[:2])
+        }
+
+        if st.button("Generate"):
+            filtered_df = filter_dataframe(df, selected_values)
+            st.write("Filtered Data:")
+            st.write(filtered_df)
 
 if __name__ == "__main__":
     main()
