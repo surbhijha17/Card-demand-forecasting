@@ -1,53 +1,59 @@
+import os
 import pandas as pd
-import spacy
+import streamlit as st
+import tempfile
+import shutil
+import base64
 
-# Load SpaCy English model
-nlp = spacy.load('en_core_web_sm')
+# Function to update Excel template from DataFrame output and store in a temporary folder
+def update_excel_templates(dataframes, template_paths):
+    # Create a temporary folder
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_files = []
+        # Iterate over each DataFrame and corresponding template
+        for df, template_path in zip(dataframes, template_paths):
+            # Load the Excel template
+            template_df = pd.read_excel(template_path)
+            
+            # Update the template with DataFrame output
+            updated_df = pd.concat([template_df, df], ignore_index=True)
+            
+            # Save the updated DataFrame to Excel in the temporary folder
+            output_file = os.path.join(temp_dir, f'output_{os.path.basename(template_path)}')
+            updated_df.to_excel(output_file, index=False)
+            
+            # Add the path to the output Excel file to the list
+            output_files.append(output_file)
+        
+        # Return the paths to the output Excel files
+        return output_files
 
-# Sample DataFrame with metadata
-data = {
-    'Product': ['Apple iPhone 13', 'Samsung Galaxy S21', 'Google Pixel 6'],
-    'Price': [999, 899, 799],
-    'Release Year': [2021, 2021, 2021],
-    'Description': ['Latest iPhone model', 'Flagship Samsung phone', 'Google\'s newest Pixel']
-}
-df = pd.DataFrame(data)
+# Sample DataFrames
+df1 = pd.DataFrame({
+    'Name': ['Alice', 'Bob', 'Charlie'],
+    'Age': [30, 25, 35],
+    'City': ['New York', 'Los Angeles', 'Chicago']
+})
 
-# Preprocess metadata
-metadata = {
-    'Product': 'product name',
-    'Price': 'price',
-    'Release Year': 'release year',
-    'Description': 'description'
-}
+df2 = pd.DataFrame({
+    'ID': [101, 102, 103],
+    'Product': ['A', 'B', 'C'],
+    'Price': [10.5, 20.2, 15.75]
+})
 
-# Function to extract relevant entities and main noun phrases from user query using SpaCy
-def extract_entities_and_noun_phrases(query):
-    doc = nlp(query)
-    entities = [ent.text.lower() for ent in doc.ents]
-    noun_phrases = [chunk.text.lower() for chunk in doc.noun_chunks]
-    return entities + noun_phrases
+# Sample Excel template paths
+template_path1 = 'template1.xlsx'
+template_path2 = 'template2.xlsx'
 
-# Function to map entities and noun phrases to dataframe columns
-def map_entities_to_column(entities):
-    for entity in entities:
-        for key, value in metadata.items():
-            if value in entity:
-                return key
-    return None
+# Update Excel templates from DataFrames and get the paths to the output Excel files
+output_file_paths = update_excel_templates([df1, df2], [template_path1, template_path2])
 
-# Function to get value based on user query
-def get_value_based_on_query(query):
-    entities = extract_entities_and_noun_phrases(query)
-    print("Entities and Noun Phrases:", entities)
-    column = map_entities_to_column(entities)
-    if column:
-        relevant_data = df[column].values.tolist()
-        return relevant_data
-    else:
-        return "Sorry, I couldn't understand your query."
+# Streamlit app
+st.title('Download Files')
 
-# Example usage
-user_query = "What is the price of the latest Samsung phone?"
-value = get_value_based_on_query(user_query)
-print("Response:", value)
+# Provide download link for each Excel file
+st.write('Download the updated Excel files:')
+for output_file_path in output_file_paths:
+    with open(output_file_path, 'rb') as file:
+        file_content = file.read()
+    st.markdown(f'[Download {os.path.basename(output_file_path)}](data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{base64.b64encode(file_content).decode()})', unsafe_allow_html=True)
