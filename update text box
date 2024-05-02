@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import streamlit as st
 import tempfile
+import shutil
 import base64
 
 # Function to update Excel template from DataFrame output and store in a temporary folder
@@ -47,16 +48,19 @@ template_path2 = 'template2.xlsx'
 # Update Excel templates from DataFrames and get the paths to the output Excel files and temporary folder
 output_file_paths, temp_folder = update_excel_templates([df1, df2], [template_path1, template_path2])
 
+# Compress the temporary folder into a zip file
+zip_file_path = shutil.make_archive(temp_folder, 'zip', temp_folder)
+
 # Streamlit app
-st.title('Download Files')
+st.title('Download Folder')
 
-# Provide download link for each Excel file
-st.write('Download the updated Excel files:')
-for output_file_path in output_file_paths:
-    with open(output_file_path, 'rb') as file:
-        file_content = file.read()
-    st.markdown(f'[Download {os.path.basename(output_file_path)}](data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{base64.b64encode(file_content).decode()})', unsafe_allow_html=True)
+# Provide download link for the zip file
+st.write('Download the folder containing the updated Excel files:')
+with open(zip_file_path, 'rb') as file:
+    file_content = file.read()
+st.markdown(f'[Download Folder](data:application/zip;base64,{base64.b64encode(file_content).decode()})', unsafe_allow_html=True)
 
-# Clean up the temporary folder after use
-st.write(f'Cleaning up temporary folder: {temp_folder}')
+# Clean up the temporary folder and zip file after use
+st.write(f'Cleaning up temporary files...')
 shutil.rmtree(temp_folder)
+os.remove(zip_file_path)
