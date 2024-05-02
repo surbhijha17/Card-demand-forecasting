@@ -2,31 +2,30 @@ import os
 import pandas as pd
 import streamlit as st
 import tempfile
-import shutil
 import base64
 
 # Function to update Excel template from DataFrame output and store in a temporary folder
 def update_excel_templates(dataframes, template_paths):
     # Create a temporary folder
-    with tempfile.TemporaryDirectory() as temp_dir:
-        output_files = []
-        # Iterate over each DataFrame and corresponding template
-        for df, template_path in zip(dataframes, template_paths):
-            # Load the Excel template
-            template_df = pd.read_excel(template_path)
-            
-            # Update the template with DataFrame output
-            updated_df = pd.concat([template_df, df], ignore_index=True)
-            
-            # Save the updated DataFrame to Excel in the temporary folder
-            output_file = os.path.join(temp_dir, f'output_{os.path.basename(template_path)}')
-            updated_df.to_excel(output_file, index=False)
-            
-            # Add the path to the output Excel file to the list
-            output_files.append(output_file)
+    temp_dir = tempfile.mkdtemp()
+    output_files = []
+    # Iterate over each DataFrame and corresponding template
+    for i, (df, template_path) in enumerate(zip(dataframes, template_paths)):
+        # Load the Excel template
+        template_df = pd.read_excel(template_path)
         
-        # Return the paths to the output Excel files
-        return output_files
+        # Update the template with DataFrame output
+        updated_df = pd.concat([template_df, df], ignore_index=True)
+        
+        # Save the updated DataFrame to Excel in the temporary folder
+        output_file = os.path.join(temp_dir, f'output_{i}.xlsx')
+        updated_df.to_excel(output_file, index=False)
+        
+        # Add the path to the output Excel file to the list
+        output_files.append(output_file)
+    
+    # Return the paths to the output Excel files and the temporary folder
+    return output_files, temp_dir
 
 # Sample DataFrames
 df1 = pd.DataFrame({
@@ -45,8 +44,8 @@ df2 = pd.DataFrame({
 template_path1 = 'template1.xlsx'
 template_path2 = 'template2.xlsx'
 
-# Update Excel templates from DataFrames and get the paths to the output Excel files
-output_file_paths = update_excel_templates([df1, df2], [template_path1, template_path2])
+# Update Excel templates from DataFrames and get the paths to the output Excel files and temporary folder
+output_file_paths, temp_folder = update_excel_templates([df1, df2], [template_path1, template_path2])
 
 # Streamlit app
 st.title('Download Files')
@@ -57,3 +56,7 @@ for output_file_path in output_file_paths:
     with open(output_file_path, 'rb') as file:
         file_content = file.read()
     st.markdown(f'[Download {os.path.basename(output_file_path)}](data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{base64.b64encode(file_content).decode()})', unsafe_allow_html=True)
+
+# Clean up the temporary folder after use
+st.write(f'Cleaning up temporary folder: {temp_folder}')
+shutil.rmtree(temp_folder)
