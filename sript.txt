@@ -1,29 +1,32 @@
-import streamlit as st
-import json
+from pptx import Presentation
 
-def main():
-    st.title("Editable Dictionary Viewer and Updater")
+def get_cell_positions(presentation_path, slide_index, table_index, row_index, col_index):
+    prs = Presentation(presentation_path)
+    slide = prs.slides[slide_index]
+    table = slide.shapes[table_index].table
 
-    # Initialize the dictionary
-    my_dictionary = {"key1": "value1", "key2": "value2", "key3": "value3"}
+    # Get the cell
+    cell = table.cell(row_index, col_index)
 
-    # Convert dictionary to JSON string
-    json_string = json.dumps(my_dictionary, indent=4)
+    # Get the position of the cell
+    left = cell._element.left
+    top = cell._element.top
+    width = cell._element.width
+    height = cell._element.height
 
-    st.write("### Current Dictionary Contents:")
-    st.text_area("Edit Dictionary", value=json_string, height=300)
+    # Calculate start and end positions
+    start_position = (left, top)
+    end_position = (left + width, top + height)
 
-    # Add a section for updating the dictionary
-    st.write("### Update Dictionary")
-    new_json_string = st.text_area("Enter Updated JSON", height=100)
-    if st.button("Update"):
-        try:
-            updated_dictionary = json.loads(new_json_string)
-            my_dictionary.update(updated_dictionary)
-            st.write("### Dictionary Updated!")
-            st.write(my_dictionary)
-        except json.JSONDecodeError:
-            st.error("Invalid JSON format. Please enter a valid JSON.")
+    return start_position, end_position
 
-if __name__ == "__main__":
-    main()
+# Example usage
+presentation_path = 'example.pptx'
+slide_index = 0
+table_index = 0
+row_index = 0
+col_index = 0
+
+start_position, end_position = get_cell_positions(presentation_path, slide_index, table_index, row_index, col_index)
+print("Start Position:", start_position)
+print("End Position:", end_position)
