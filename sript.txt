@@ -1,46 +1,32 @@
-import tkinter as tk
-import re
+import streamlit as st
 
-def check_and_format_tags(event):
-    current_line_number = int(text_editor.index("insert").split(".")[0])
-    previous_line_number = current_line_number - 1
-    prev_line_text = text_editor.get(f"{previous_line_number}.0", f"{previous_line_number}.end").strip()
-    tags = text_editor.tag_names()  # Get all the applied tags
+def display_dictionary(dictionary):
+    st.write("### Dictionary Contents:")
+    for key, value in dictionary.items():
+        st.write(f"- **{key}:** {value}")
 
-    for tag in tags:
-        if tag in prev_line_text:
-            text_editor.tag_add("bold", f"{current_line_number}.0", f"{current_line_number}.end")
-            text_editor.tag_config("bold", font=("TkDefaultFont", 11, "bold"))
-            break
+def update_dictionary(dictionary, key, value):
+    dictionary[key] = value
+    st.write("### Dictionary Updated!")
+    st.write(f"- **{key}:** {value}")
 
-    current_line_text = text_editor.get(f"{current_line_number}.0", f"{current_line_number}.end").strip()
-    if re.search(r"\bAgent\b", current_line_text):
-        match_obj = re.search(r"\bAgent\b", current_line_text)
-        tag_start = match_obj.start()
-        tag_end = match_obj.end()
-        text_editor.tag_add("green", f"{current_line_number}.0+{tag_start}c", f"{current_line_number}.0+{tag_end}c")
-        text_editor.tag_config("green", foreground="green")
-        text_editor.tag_configure("bold")
-    if re.search(r"\bCustomer\b", current_line_text):
-        # Apply red color to "Customer" tag
-        match_obj = re.search(r"\bCustomer\b", current_line_text)
-        tag_start = match_obj.start()
-        tag_end = match_obj.end()
-        text_editor.tag_add("red", f"{current_line_number}.0+{tag_start}c", f"{current_line_number}.0+{tag_end}c")
-        text_editor.tag_config("red", foreground="red")
+def main():
+    st.title("Dictionary Viewer and Updater")
 
-    # Scroll the text editor to show the new line
-    text_editor.yview_moveto(1.0)
+    # Initialize the dictionary
+    my_dictionary = {"key1": "value1", "key2": "value2", "key3": "value3"}
 
-root = tk.Tk()
-text_editor = tk.Text(root)
-text_editor.pack()
+    # Display the initial contents of the dictionary
+    display_dictionary(my_dictionary)
 
-text_editor.tag_configure("bold", font=("TkDefaultFont", 18, "bold"))
-text_editor.tag_configure("green", foreground="green")
-text_editor.tag_configure("red", foreground="red")
+    # Add a section for updating the dictionary
+    st.sidebar.title("Update Dictionary")
+    key = st.sidebar.text_input("Enter Key:")
+    value = st.sidebar.text_input("Enter Value:")
+    if st.sidebar.button("Update"):
+        update_dictionary(my_dictionary, key, value)
+        # Display the updated contents of the dictionary
+        display_dictionary(my_dictionary)
 
-text_editor.bind("<Return>", check_and_format_tags)
-text_editor.bind("<KeyRelease>", check_and_format_tags)
-
-root.mainloop()
+if __name__ == "__main__":
+    main()
