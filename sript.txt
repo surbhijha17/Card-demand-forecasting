@@ -1,32 +1,29 @@
 import streamlit as st
-
-def display_dictionary(dictionary):
-    st.write("### Dictionary Contents:")
-    for key, value in dictionary.items():
-        st.write(f"- **{key}:** {value}")
-
-def update_dictionary(dictionary, key, value):
-    dictionary[key] = value
-    st.write("### Dictionary Updated!")
-    st.write(f"- **{key}:** {value}")
+import json
 
 def main():
-    st.title("Dictionary Viewer and Updater")
+    st.title("Editable Dictionary Viewer and Updater")
 
     # Initialize the dictionary
     my_dictionary = {"key1": "value1", "key2": "value2", "key3": "value3"}
 
-    # Display the initial contents of the dictionary
-    display_dictionary(my_dictionary)
+    # Convert dictionary to JSON string
+    json_string = json.dumps(my_dictionary, indent=4)
+
+    st.write("### Current Dictionary Contents:")
+    st.text_area("Edit Dictionary", value=json_string, height=300)
 
     # Add a section for updating the dictionary
-    st.sidebar.title("Update Dictionary")
-    key = st.sidebar.text_input("Enter Key:")
-    value = st.sidebar.text_input("Enter Value:")
-    if st.sidebar.button("Update"):
-        update_dictionary(my_dictionary, key, value)
-        # Display the updated contents of the dictionary
-        display_dictionary(my_dictionary)
+    st.write("### Update Dictionary")
+    new_json_string = st.text_area("Enter Updated JSON", height=100)
+    if st.button("Update"):
+        try:
+            updated_dictionary = json.loads(new_json_string)
+            my_dictionary.update(updated_dictionary)
+            st.write("### Dictionary Updated!")
+            st.write(my_dictionary)
+        except json.JSONDecodeError:
+            st.error("Invalid JSON format. Please enter a valid JSON.")
 
 if __name__ == "__main__":
     main()
