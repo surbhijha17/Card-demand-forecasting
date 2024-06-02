@@ -1,43 +1,48 @@
-import streamlit as st
 import pandas as pd
+import re
 
-def filter_dataframe(df, selected_values):
-    filtered_df = df[df['Column_A'].isin(selected_values['column_a']) &
-                     df['Column_B'].isin(selected_values['column_b']) &
-                     df['Column_C'].isin(selected_values['column_c'])]
-    return filtered_df
+# Sample data frame
+data = {
+    'delegate': ['Investment Ops', 'Investment Ops', 'Risk', 'Risk'],
+    'legal_entity': ['amde', 'amde', 'amde', 'amde'],
+    'metric': ['m1', 'm2', 'm1', 'm2'],
+    'val_old': [100, 200, 150, 250],
+    'val_new': [110, 210, 160, 260]
+}
 
-def main():
-    st.title('Data Filter App')
+df = pd.DataFrame(data)
+
+# QA function
+def answer_question(question, df):
+    # Define regex patterns
+    patterns = {
+        'delegate': r"delegate (\w+)",
+        'legal_entity': r"legal entity (\w+)",
+        'metric': r"metric (\w+)"
+    }
+
+    extracted_info = {}
     
-    uploaded_file = st.sidebar.file_uploader("Upload Excel file", type=["xlsx", "xls"])
-    input_year = st.sidebar.text_input("Input Year:")
-    input_quarter = st.sidebar.text_input("Input Quarter:")
+    # Extract information from question
+    for key, pattern in patterns.items():
+        match = re.search(pattern, question)
+        if match:
+            extracted_info[key] = match.group(1)
+        else:
+            return f"Could not extract {key} from the question."
+    
+    # Filter the data frame based on the extracted information
+    filtered_df = df.copy()
+    for key, value in extracted_info.items():
+        filtered_df = filtered_df[filtered_df[key] == value]
 
-    options_generated = False
-    if uploaded_file is not None and input_year and input_quarter:
-        options_generated = True
-        df = pd.read_excel(uploaded_file)
-        st.write("Sample Data:")
-        st.write(df.head())
+    if not filtered_df.empty:
+        difference = filtered_df['val_new'].iloc[0] - filtered_df['val_old'].iloc[0]
+        return f"The difference of val_old to val_new for {extracted_info['metric']} is {difference}."
+    else:
+        return "No data found for the given query."
 
-        column_a_options = df['Column_A'].unique()
-        column_b_options = df['Column_B'].unique()
-        column_c_options = df['Column_C'].unique()
-
-    if options_generated:
-        with st.sidebar.beta_expander("Filter Options", expanded=True):
-            selected_values = {
-                'column_a': st.multiselect("Select values for Column A", column_a_options, default=column_a_options[:2]),
-                'column_b': st.multiselect("Select values for Column B", column_b_options, default=column_b_options[:2]),
-                'column_c': st.multiselect("Select values for Column C", column_c_options, default=column_c_options[:2])
-            }
-
-        if st.sidebar.button("Generate"):
-            if options_generated:
-                filtered_df = filter_dataframe(df, selected_values)
-                st.write("Filtered Data:")
-                st.write(filtered_df)
-
-if __name__ == "__main__":
-    main()
+# Example question
+question = "For the delegate Investment Ops legal entity amde what is difference of val_old to val_new for metric m1"
+answer = answer_question(question, df)
+print(answer)
