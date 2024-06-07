@@ -1,21 +1,38 @@
-import pandas as pd
+import torch
+from transformers import RobertaTokenizer, RobertaForQuestionAnswering
 
-# Sample DataFrame
-data = {'A': [1000.123456789, -2000.987654321],
-        'B': [123456, -987654]}
-df = pd.DataFrame(data)
+# Load pre-trained model and tokenizer
+tokenizer = RobertaTokenizer.from_pretrained('deepset/roberta-base-squad2')
+model = RobertaForQuestionAnswering.from_pretrained('deepset/roberta-base-squad2')
 
-# Define custom formatting function
-def custom_format(x):
-    if x > 0:
-        return '{:,.2f}'.format(x)
-    elif x < 0:
-        return '({:,.2f})'.format(abs(x))
-    else:
-        return '-'
+# Function to extract answer using RoBERTa SQuAD
+def extract_answer(question, context):
+    inputs = tokenizer.encode_plus(question, context, add_special_tokens=True, return_tensors="pt")
+    input_ids = inputs["input_ids"].tolist()[0]
 
-# Apply custom formatting to all columns
-styled_df = df.style.format(custom_format)
+    outputs = model(**inputs)
+    answer_start_scores = outputs.start_logits
+    answer_end_scores = outputs.end_logits
 
-# Display the styled DataFrame
-styled_df
+    answer_start = torch.argmax(answer_start_scores)
+    answer_end = torch.argmax(answer_end_scores) + 1
+
+    answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(input_ids[answer_start:answer_end]))
+    return answer
+
+# Define the context (columns and different filtering conditions)
+context = """
+Column: delegate Investment Ops
+Legal Entity: amde
+Metric: m1
+val_old: 100
+val_new: 150
+...
+"""
+
+# Define the question
+question = "For the delegate Investment Ops legal entity amde what is difference of val_old to val_new for metric m1"
+
+# Extract the answer
+answer = extract_answer(question, context)
+print(f"Answer: {answer}")
