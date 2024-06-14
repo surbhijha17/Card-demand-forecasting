@@ -21,5 +21,630 @@
       "operation columns": ["revenue_old", "revenue_new"]
     }
   },
-  ...
-]
+  {
+    "context": "For the delegate Finance and Accounting legal entity UK, what is the average of cost_old and cost_new for metric cost?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Finance and Accounting",
+      "risk legal entity": "UK",
+      "metric": "cost",
+      "operation": "average",
+      "operation columns": ["cost_old", "cost_new"]
+    }
+  },
+  {
+    "context": "For the delegate HR and Admin legal entity India, what is the maximum of salary_old and salary_new for metric salary?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "HR and Admin",
+      "risk legal entity": "India",
+      "metric": "salary",
+      "operation": "maximum",
+      "operation columns": ["salary_old", "salary_new"]
+    }
+  },
+  {
+    "context": "For the delegate IT and Support legal entity Germany, what is the minimum of expense_old and expense_new for metric expense?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "IT and Support",
+      "risk legal entity": "Germany",
+      "metric": "expense",
+      "operation": "minimum",
+      "operation columns": ["expense_old", "expense_new"]
+    }
+  },
+  {
+    "context": "For the delegate Marketing and PR legal entity France, what is the ratio of sales_old to sales_new for metric sales?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Marketing and PR",
+      "risk legal entity": "France",
+      "metric": "sales",
+      "operation": "ratio",
+      "operation columns": ["sales_old", "sales_new"]
+    }
+  },
+  {
+    "context": "For the delegate Operations and Logistics legal entity Canada, what is the difference of inventory_old to inventory_new for metric inventory?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Operations and Logistics",
+      "risk legal entity": "Canada",
+      "metric": "inventory",
+      "operation": "difference",
+      "operation columns": ["inventory_old", "inventory_new"]
+    }
+  },
+  {
+    "context": "For the delegate Customer Service legal entity Australia, what is the sum of feedback_old and feedback_new for metric feedback?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Customer Service",
+      "risk legal entity": "Australia",
+      "metric": "feedback",
+      "operation": "sum",
+      "operation columns": ["feedback_old", "feedback_new"]
+    }
+  },
+  {
+    "context": "For the delegate R&D legal entity Japan, what is the average of innovation_score_old and innovation_score_new for metric innovation_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "R&D",
+      "risk legal entity": "Japan",
+      "metric": "innovation_score",
+      "operation": "average",
+      "operation columns": ["innovation_score_old", "innovation_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Quality Assurance legal entity South Korea, what is the maximum of defect_rate_old and defect_rate_new for metric defect_rate?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Quality Assurance",
+      "risk legal entity": "South Korea",
+      "metric": "defect_rate",
+      "operation": "maximum",
+      "operation columns": ["defect_rate_old", "defect_rate_new"]
+    }
+  },
+  {
+    "context": "For the delegate Production legal entity China, what is the minimum of downtime_old and downtime_new for metric downtime?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Production",
+      "risk legal entity": "China",
+      "metric": "downtime",
+      "operation": "minimum",
+      "operation columns": ["downtime_old", "downtime_new"]
+    }
+  },
+  {
+    "context": "For the delegate Procurement legal entity Brazil, what is the difference of supply_old to supply_new for metric supply?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Procurement",
+      "risk legal entity": "Brazil",
+      "metric": "supply",
+      "operation": "difference",
+      "operation columns": ["supply_old", "supply_new"]
+    }
+  },
+  {
+    "context": "For the delegate Logistics legal entity Mexico, what is the sum of delivery_time_old and delivery_time_new for metric delivery_time?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Logistics",
+      "risk legal entity": "Mexico",
+      "metric": "delivery_time",
+      "operation": "sum",
+      "operation columns": ["delivery_time_old", "delivery_time_new"]
+    }
+  },
+  {
+    "context": "For the delegate Compliance legal entity Russia, what is the average of audit_score_old and audit_score_new for metric audit_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Compliance",
+      "risk legal entity": "Russia",
+      "metric": "audit_score",
+      "operation": "average",
+      "operation columns": ["audit_score_old", "audit_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Strategy legal entity Italy, what is the maximum of strategic_score_old and strategic_score_new for metric strategic_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Strategy",
+      "risk legal entity": "Italy",
+      "metric": "strategic_score",
+      "operation": "maximum",
+      "operation columns": ["strategic_score_old", "strategic_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Business Development legal entity Spain, what is the minimum of growth_rate_old and growth_rate_new for metric growth_rate?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Business Development",
+      "risk legal entity": "Spain",
+      "metric": "growth_rate",
+      "operation": "minimum",
+      "operation columns": ["growth_rate_old", "growth_rate_new"]
+    }
+  },
+  {
+    "context": "For the delegate Legal and Compliance legal entity Netherlands, what is the ratio of compliance_score_old to compliance_score_new for metric compliance_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Legal and Compliance",
+      "risk legal entity": "Netherlands",
+      "metric": "compliance_score",
+      "operation": "ratio",
+      "operation columns": ["compliance_score_old", "compliance_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Communications legal entity Sweden, what is the difference of public_relations_old to public_relations_new for metric public_relations?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Communications",
+      "risk legal entity": "Sweden",
+      "metric": "public_relations",
+      "operation": "difference",
+      "operation columns": ["public_relations_old", "public_relations_new"]
+    }
+  },
+  {
+    "context": "For the delegate Risk Management legal entity Norway, what is the sum of risk_score_old and risk_score_new for metric risk_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Risk Management",
+      "risk legal entity": "Norway",
+      "metric": "risk_score",
+      "operation": "sum",
+      "operation columns": ["risk_score_old", "risk_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Treasury legal entity Finland, what is the average of cash_flow_old and cash_flow_new for metric cash_flow?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Treasury",
+      "risk legal entity": "Finland",
+      "metric": "cash_flow",
+      "operation": "average",
+      "operation columns": ["cash_flow_old", "cash_flow_new"]
+    }
+  },
+  {
+    "context": "For the delegate Investor Relations legal entity Denmark, what is the maximum of investor_score_old and investor_score_new for metric investor_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Investor Relations",
+      "risk legal entity": "Denmark",
+      "metric": "investor_score",
+      "operation": "maximum",
+      "operation columns": ["investor_score_old", "investor_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Environmental legal entity Austria, what is the minimum of sustainability_score_old and sustainability_score_new for metric sustainability_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Environmental",
+      "risk legal entity": "Austria",
+      "metric": "sustainability_score",
+      "operation": "minimum",
+      "operation columns": ["sustainability_score_old", "sustainability_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Supply Chain legal entity Belgium, what is the ratio of supply_chain_score_old to supply_chain_score_new for metric supply_chain_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Supply Chain",
+      "risk legal entity": "Belgium",
+      "metric": "supply_chain_score",
+      "operation": "ratio",
+      "operation columns": ["supply_chain_score_old", "supply_chain_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Facilities Management legal entity Switzerland, what is the difference of maintenance_cost_old to maintenance_cost_new for metric maintenance_cost?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Facilities Management",
+      "risk legal entity": "Switzerland",
+      "metric": "maintenance_cost",
+      "operation": "difference",
+      "operation columns": ["maintenance_cost_old", "maintenance_cost_new"]
+    }
+  },
+  {
+    "context": "For the delegate Public Affairs legal entity Ireland, what is the sum of advocacy_score_old and advocacy_score_new for metric advocacy_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Public Affairs",
+      "risk legal entity": "Ireland",
+      "metric": "advocacy_score",
+      "operation": "sum",
+      "operation columns": ["advocacy_score_old", "advocacy_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Business Intelligence legal entity Portugal, what is the average of intelligence_score_old and intelligence_score_new for metric intelligence_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Business Intelligence",
+      "risk legal entity": "Portugal",
+      "metric": "intelligence_score",
+      "operation": "average",
+      "operation columns": ["intelligence_score_old", "intelligence_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Legal and Regulatory legal entity Poland, what is the maximum of compliance_rate_old and compliance_rate_new for metric compliance_rate?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Legal and Regulatory",
+      "risk legal entity": "Poland",
+      "metric": "compliance_rate",
+      "operation": "maximum",
+      "operation columns": ["compliance_rate_old", "compliance_rate_new"]
+    }
+  },
+  {
+    "context": "For the delegate Product Management legal entity Czech Republic, what is the minimum of product_quality_old and product_quality_new for metric product_quality?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Product Management",
+      "risk legal entity": "Czech Republic",
+      "metric": "product_quality",
+      "operation": "minimum",
+      "operation columns": ["product_quality_old", "product_quality_new"]
+    }
+  },
+  {
+    "context": "For the delegate Asset Management legal entity Hungary, what is the ratio of asset_value_old to asset_value_new for metric asset_value?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Asset Management",
+      "risk legal entity": "Hungary",
+      "metric": "asset_value",
+      "operation": "ratio",
+      "operation columns": ["asset_value_old", "asset_value_new"]
+    }
+  },
+  {
+    "context": "For the delegate Project Management legal entity Slovakia, what is the difference of project_cost_old to project_cost_new for metric project_cost?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Project Management",
+      "risk legal entity": "Slovakia",
+      "metric": "project_cost",
+      "operation": "difference",
+      "operation columns": ["project_cost_old", "project_cost_new"]
+    }
+  },
+  {
+    "context": "For the delegate Corporate Development legal entity Slovenia, what is the sum of development_cost_old and development_cost_new for metric development_cost?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Corporate Development",
+      "risk legal entity": "Slovenia",
+      "metric": "development_cost",
+      "operation": "sum",
+      "operation columns": ["development_cost_old", "development_cost_new"]
+    }
+  },
+  {
+    "context": "For the delegate Corporate Strategy legal entity Romania, what is the average of strategy_score_old and strategy_score_new for metric strategy_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Corporate Strategy",
+      "risk legal entity": "Romania",
+      "metric": "strategy_score",
+      "operation": "average",
+      "operation columns": ["strategy_score_old", "strategy_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Financial Analysis legal entity Bulgaria, what is the maximum of analysis_score_old and analysis_score_new for metric analysis_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Financial Analysis",
+      "risk legal entity": "Bulgaria",
+      "metric": "analysis_score",
+      "operation": "maximum",
+      "operation columns": ["analysis_score_old", "analysis_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Market Research legal entity Greece, what is the minimum of research_score_old and research_score_new for metric research_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Market Research",
+      "risk legal entity": "Greece",
+      "metric": "research_score",
+      "operation": "minimum",
+      "operation columns": ["research_score_old", "research_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Compliance and Risk legal entity Croatia, what is the ratio of risk_assessment_old to risk_assessment_new for metric risk_assessment?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Compliance and Risk",
+      "risk legal entity": "Croatia",
+      "metric": "risk_assessment",
+      "operation": "ratio",
+      "operation columns": ["risk_assessment_old", "risk_assessment_new"]
+    }
+  },
+  {
+    "context": "For the delegate Regulatory Affairs legal entity Serbia, what is the difference of regulation_score_old to regulation_score_new for metric regulation_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Regulatory Affairs",
+      "risk legal entity": "Serbia",
+      "metric": "regulation_score",
+      "operation": "difference",
+      "operation columns": ["regulation_score_old", "regulation_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Health and Safety legal entity Bosnia, what is the sum of safety_score_old and safety_score_new for metric safety_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Health and Safety",
+      "risk legal entity": "Bosnia",
+      "metric": "safety_score",
+      "operation": "sum",
+      "operation columns": ["safety_score_old", "safety_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Security and Surveillance legal entity Ukraine, what is the average of security_score_old and security_score_new for metric security_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Security and Surveillance",
+      "risk legal entity": "Ukraine",
+      "metric": "security_score",
+      "operation": "average",
+      "operation columns": ["security_score_old", "security_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Operations Management legal entity Belarus, what is the maximum of ops_score_old and ops_score_new for metric ops_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Operations Management",
+      "risk legal entity": "Belarus",
+      "metric": "ops_score",
+      "operation": "maximum",
+      "operation columns": ["ops_score_old", "ops_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Service Management legal entity Lithuania, what is the minimum of service_quality_old and service_quality_new for metric service_quality?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Service Management",
+      "risk legal entity": "Lithuania",
+      "metric": "service_quality",
+      "operation": "minimum",
+      "operation columns": ["service_quality_old", "service_quality_new"]
+    }
+  },
+  {
+    "context": "For the delegate IT Operations legal entity Latvia, what is the ratio of it_score_old to it_score_new for metric it_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "IT Operations",
+      "risk legal entity": "Latvia",
+      "metric": "it_score",
+      "operation": "ratio",
+      "operation columns": ["it_score_old", "it_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Client Services legal entity Estonia, what is the difference of client_satisfaction_old to client_satisfaction_new for metric client_satisfaction?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Client Services",
+      "risk legal entity": "Estonia",
+      "metric": "client_satisfaction",
+      "operation": "difference",
+      "operation columns": ["client_satisfaction_old", "client_satisfaction_new"]
+    }
+  },
+  {
+    "context": "For the delegate Customer Experience legal entity Malta, what is the sum of experience_score_old and experience_score_new for metric experience_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Customer Experience",
+      "risk legal entity": "Malta",
+      "metric": "experience_score",
+      "operation": "sum",
+      "operation columns": ["experience_score_old", "experience_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Quality Control legal entity Cyprus, what is the average of control_score_old and control_score_new for metric control_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Quality Control",
+      "risk legal entity": "Cyprus",
+      "metric": "control_score",
+      "operation": "average",
+      "operation columns": ["control_score_old", "control_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Corporate Communications legal entity Luxembourg, what is the maximum of communication_score_old and communication_score_new for metric communication_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Corporate Communications",
+      "risk legal entity": "Luxembourg",
+      "metric": "communication_score",
+      "operation": "maximum",
+      "operation columns": ["communication_score_old", "communication_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Data Analytics legal entity Iceland, what is the minimum of analytics_score_old and analytics_score_new for metric analytics_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Data Analytics",
+      "risk legal entity": "Iceland",
+      "metric": "analytics_score",
+      "operation": "minimum",
+      "operation columns": ["analytics_score_old", "analytics_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Research and Development legal entity Turkey, what is the ratio of r&d_score_old to r&d_score_new for metric r&d_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Research and Development",
+      "risk legal entity": "Turkey",
+      "metric": "r&d_score",
+      "operation": "ratio",
+      "operation columns": ["r&d_score_old", "r&d_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Media Relations legal entity Israel, what is the difference of media_impact_old to media_impact_new for metric media_impact?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Media Relations",
+      "risk legal entity": "Israel",
+      "metric": "media_impact",
+      "operation": "difference",
+      "operation columns": ["media_impact_old", "media_impact_new"]
+    }
+  },
+  {
+    "context": "For the delegate Financial Planning legal entity UAE, what is the sum of planning_score_old and planning_score_new for metric planning_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Financial Planning",
+      "risk legal entity": "UAE",
+      "metric": "planning_score",
+      "operation": "sum",
+      "operation columns": ["planning_score_old", "planning_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Business Strategy legal entity Saudi Arabia, what is the average of strategy_score_old and strategy_score_new for metric strategy_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Business Strategy",
+      "risk legal entity": "Saudi Arabia",
+      "metric": "strategy_score",
+      "operation": "average",
+      "operation columns": ["strategy_score_old", "strategy_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Human Resources legal entity Qatar, what is the maximum of hr_score_old and hr_score_new for metric hr_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Human Resources",
+      "risk legal entity": "Qatar",
+      "metric": "hr_score",
+      "operation": "maximum",
+      "operation columns": ["hr_score_old", "hr_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Corporate Governance legal entity Kuwait, what is the minimum of governance_score_old and governance_score_new for metric governance_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Corporate Governance",
+      "risk legal entity": "Kuwait",
+      "metric": "governance_score",
+      "operation": "minimum",
+      "operation columns": ["governance_score_old", "governance_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Product Development legal entity Oman, what is the ratio of development_score_old to development_score_new for metric development_score?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Product Development",
+      "risk legal entity": "Oman",
+      "metric": "development_score",
+      "operation": "ratio",
+      "operation columns": ["development_score_old", "development_score_new"]
+    }
+  },
+  {
+    "context": "For the delegate Market Analysis legal entity Bahrain, what is the difference of market_value_old to market_value_new for metric market_value?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Market Analysis",
+      "risk legal entity": "Bahrain",
+      "metric": "market_value",
+      "operation": "difference",
+      "operation columns": ["market_value_old", "market_value_new"]
+    }
+  },
+  {
+    "context": "For the delegate Client Management legal entity Jordan, what is the sum of client_value_old and client_value_new for metric client_value?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Client Management",
+      "risk legal entity": "Jordan",
+      "metric": "client_value",
+      "operation": "sum",
+      "operation columns": ["client_value_old", "client_value_new"]
+    }
+  },
+  {
+    "context": "For the delegate Marketing Research legal entity Lebanon, what is the average of research_value_old and research_value_new for metric research_value?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Marketing Research",
+      "risk legal entity": "Lebanon",
+      "metric": "research_value",
+      "operation": "average",
+      "operation columns": ["research_value_old", "research_value_new"]
+    }
+  },
+  {
+    "context": "For the delegate Sales Operations legal entity Egypt, what is the maximum of sales_value_old and sales_value_new for metric sales_value?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Sales Operations",
+      "risk legal entity": "Egypt",
+      "metric": "sales_value",
+      "operation": "maximum",
+      "operation columns": ["sales_value_old", "sales_value_new"]
+    }
+  },
+  {
+    "context": "For the delegate Customer Relations legal entity South Africa, what is the minimum of relations_value_old and relations_value_new for metric relations_value?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Customer Relations",
+      "risk legal entity": "South Africa",
+      "metric": "relations_value",
+      "operation": "minimum",
+      "operation columns": ["relations_value_old", "relations_value_new"]
+    }
+  },
+  {
+    "context": "For the delegate Strategic Planning legal entity Kenya, what is the ratio of planning_value_old to planning_value_new for metric planning_value?",
+    "question": "What is the filtering condition?",
+    "answer": {
+      "delegate": "Strategic Planning",
+      "risk legal entity": "Kenya",
+      "metric": "planning_value",
+      "operation": "ratio",
+      "operation columns": ["planning_value_old", "planning_value_new"]
+    }
+  }]
