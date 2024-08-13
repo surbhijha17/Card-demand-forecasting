@@ -1,44 +1,87 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Audio Transcription</title>
-</head>
-<body>
-    <button id="start">Start Recording</button>
-    <button id="stop">Stop Recording</button>
-    <div id="transcription"></div>
+import asyncio
+import websockets
+import json
+import threading
+from six.moves import queue
+from faster_whisper import WhisperModel
 
-    <script>
-        const startButton = document.getElementById('start');
-        const stopButton = document.getElementById('stop');
-        const transcriptionDiv = document.getElementById('transcription');
+IP = '0.0.0.0'
+PORT = 8000
 
-        let recorder;
-        let socket;
+class Transcoder(object):
+    """
+    Converts audio chunks to text using Faster Whisper
+    """
+    def __init__(self, model_path, language=None):
+        self.buff = queue.Queue()
+        self.language = language
+        self.closed = True
+        self.transcript = None
+        self.model = WhisperModel(model_path)
 
-        startButton.addEventListener('click', () => {
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(stream => {
-                    recorder = new MediaRecorder(stream);
-                    recorder.start();
+    def start(self):
+        """Start up the transcription process"""
+        threading.Thread(target=self.process).start()
 
-                    socket = new WebSocket('ws://localhost:8765');
-                    socket.onopen = () => {
-                        recorder.ondataavailable = (event) => {
-                            socket.send(event.data);
-                        };
-                    };
-                    socket.onmessage = (event) => {
-                        const data = JSON.parse(event.data);
-                        transcriptionDiv.textContent += data.text + ' ';
-                    };
-                });
-        });
+    def process(self):
+        """
+        Audio stream recognition and result parsing
+        """
+        audio_generator = self.stream_generator()
+        for content in audio_generator:
+            segments, _ = self.model.transcribe(content, language=self.language)
+            self.transcript = " ".join([segment.text for segment in segments])
 
-        stopButton.addEventListener('click', () => {
-            recorder.stop();
-            socket.close();
-        });
-    </script>
-</body>
-</html>
+    def stream_generator(self):
+        while not self.closed:
+            chunk = self.buff.get()
+            if chunk is None:
+                return
+            data = [chunk]
+            while True:
+                try:
+                    chunk = self.buff.get(block=False)
+                    if chunk is None:
+                        return
+                    data.append(chunk)
+                except queue.Empty:
+                    break
+            yield b''.join(data)
+
+    def write(self, data):
+        """
+        Writes data to the buffer
+        """
+        self.buff.put(data)
+
+
+async def audio_processor(websocket, path):
+    """
+    Collects audio from the stream, writes it to buffer and returns the output of Faster Whisper transcription
+    """
+    config = await websocket.recv()
+    if not isinstance(config, str):
+        print("ERROR, no config")
+        return
+    config = json.loads(config)
+    transcoder = Transcoder(
+        model_path=config["model_path"],
+        language=config.get("language")  # Optional, None by default
+    )
+    transcoder.start()
+    while True:
+        try:
+            data = await websocket.recv()
+        except websockets.ConnectionClosed:
+            print("Connection closed")
+            break
+        transcoder.write(data)
+        transcoder.closed = False
+        if transcoder.transcript:
+            print(transcoder.transcript)
+            await websocket.send(transcoder.transcript)
+            transcoder.transcript = None
+
+start_server = websockets.serve(audio_processor, IP, PORT)
+asyncio.get_event_loop().run_until_complete(start_server)
+asyncio.get_event_loop().run_forever()
