@@ -1,87 +1,78 @@
-import asyncio
-import websockets
-import json
-import threading
-from six.moves import queue
-from faster_whisper import WhisperModel
+let audioContext;
+let mediaRecorder;
+let socket;
+let chunks = [];
+let isRecording = false;
 
-IP = '0.0.0.0'
-PORT = 8000
+const startButton = document.getElementById('startButton');
+const stopButton = document.getElementById('stopButton');
 
-class Transcoder(object):
-    """
-    Converts audio chunks to text using Faster Whisper
-    """
-    def __init__(self, model_path, language=None):
-        self.buff = queue.Queue()
-        self.language = language
-        self.closed = True
-        self.transcript = None
-        self.model = WhisperModel(model_path)
+startButton.addEventListener('click', async () => {
+    // Initialize WebSocket connection
+    socket = new WebSocket('ws://0.0.0.0:8000');
+    
+    socket.onopen = () => {
+        console.log('WebSocket connection opened');
+    };
 
-    def start(self):
-        """Start up the transcription process"""
-        threading.Thread(target=self.process).start()
+    socket.onmessage = (event) => {
+        console.log('Transcript:', event.data);
+    };
 
-    def process(self):
-        """
-        Audio stream recognition and result parsing
-        """
-        audio_generator = self.stream_generator()
-        for content in audio_generator:
-            segments, _ = self.model.transcribe(content, language=self.language)
-            self.transcript = " ".join([segment.text for segment in segments])
+    socket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+    };
 
-    def stream_generator(self):
-        while not self.closed:
-            chunk = self.buff.get()
-            if chunk is None:
-                return
-            data = [chunk]
-            while True:
-                try:
-                    chunk = self.buff.get(block=False)
-                    if chunk is None:
-                        return
-                    data.append(chunk)
-                except queue.Empty:
-                    break
-            yield b''.join(data)
+    socket.onclose = () => {
+        console.log('WebSocket connection closed');
+    };
 
-    def write(self, data):
-        """
-        Writes data to the buffer
-        """
-        self.buff.put(data)
+    // Initialize audio recording
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    
+    mediaRecorder.ondataavailable = (event) => {
+        chunks.push(event.data);
 
+        if (isRecording && mediaRecorder.state === 'recording') {
+            setTimeout(() => {
+                if (chunks.length > 0) {
+                    const blob = new Blob(chunks, { type: 'audio/webm' });
+                    sendAudioChunk(blob);
+                    chunks = [];
+                }
+            }, 3000); // Send audio every 3 seconds
+        }
+    };
 
-async def audio_processor(websocket, path):
-    """
-    Collects audio from the stream, writes it to buffer and returns the output of Faster Whisper transcription
-    """
-    config = await websocket.recv()
-    if not isinstance(config, str):
-        print("ERROR, no config")
-        return
-    config = json.loads(config)
-    transcoder = Transcoder(
-        model_path=config["model_path"],
-        language=config.get("language")  # Optional, None by default
-    )
-    transcoder.start()
-    while True:
-        try:
-            data = await websocket.recv()
-        except websockets.ConnectionClosed:
-            print("Connection closed")
-            break
-        transcoder.write(data)
-        transcoder.closed = False
-        if transcoder.transcript:
-            print(transcoder.transcript)
-            await websocket.send(transcoder.transcript)
-            transcoder.transcript = None
+    mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        sendAudioChunk(blob);
+        chunks = [];
+        socket.close();
+    };
 
-start_server = websockets.serve(audio_processor, IP, PORT)
-asyncio.get_event_loop().run_until_complete(start_server)
-asyncio.get_event_loop().run_forever()
+    mediaRecorder.start();
+    isRecording = true;
+    startButton.disabled = true;
+    stopButton.disabled = false;
+});
+
+stopButton.addEventListener('click', () => {
+    if (isRecording) {
+        mediaRecorder.stop();
+        isRecording = false;
+        startButton.disabled = false;
+        stopButton.disabled = true;
+    }
+});
+
+function sendAudioChunk(blob) {
+    if (socket.readyState === WebSocket.OPEN) {
+        socket.send(blob);
+        console.log('Audio chunk sent');
+    } else {
+        console.error('WebSocket is not open');
+    }
+}
