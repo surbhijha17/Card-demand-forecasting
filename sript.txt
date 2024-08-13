@@ -1,45 +1,64 @@
-import win32com.client
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCM Audio Recorder</title>
+</head>
+<body>
+    <h1>PCM Audio Recorder</h1>
+    <button id="startBtn">Start Recording</button>
+    <button id="stopBtn" disabled>Stop Recording</button>
 
-def find_table_and_cell(presentation_path, slide_index, row_index, col_index):
-    app = win32com.client.Dispatch("PowerPoint.Application")
-    presentation = app.Presentations.Open(presentation_path)
-    slide = presentation.Slides(slide_index + 1)  # Slide index is 1-based in PowerPoint
+    <script>
+        let mediaRecorder;
+        let audioContext;
+        let sourceNode;
+        let scriptProcessor;
 
-    # Iterate over all shapes on the slide
-    for shape_index in range(1, slide.Shapes.Count + 1):
-        shape = slide.Shapes(shape_index)
-        if shape.HasTable:
-            table = shape.Table
-            # Check if the specified cell is within this table
-            if row_index < table.Rows.Count and col_index < table.Columns.Count:
-                cell = table.Cell(row_index + 1, col_index + 1)  # Cell indices are 1-based in PowerPoint
-                cell_left = shape.Left + cell.Left
-                cell_top = shape.Top + cell.Top
-                cell_width = cell.Width
-                cell_height = cell.Height
+        document.getElementById('startBtn').onclick = () => {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    audioContext = new AudioContext();
+                    sourceNode = audioContext.createMediaStreamSource(stream);
+                    scriptProcessor = audioContext.createScriptProcessor(4096, 1, 1);
 
-                start_position = (cell_left, cell_top)
-                end_position = (cell_left + cell_width, cell_top + cell_height)
+                    scriptProcessor.onaudioprocess = event => {
+                        const inputBuffer = event.inputBuffer;
+                        const pcmData = inputBuffer.getChannelData(0);
+                        sendAudioData(pcmData);
+                    };
 
-                presentation.Close()
-                app.Quit()
+                    sourceNode.connect(scriptProcessor);
+                    scriptProcessor.connect(audioContext.destination);
 
-                return start_position, end_position
+                    document.getElementById('startBtn').disabled = true;
+                    document.getElementById('stopBtn').disabled = false;
+                });
+        };
 
-    presentation.Close()
-    app.Quit()
+        document.getElementById('stopBtn').onclick = () => {
+            scriptProcessor.disconnect();
+            sourceNode.disconnect();
+            audioContext.close();
 
-    return None, None
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+        };
 
-# Example usage
-presentation_path = r'path_to_your_presentation.pptx'
-slide_index = 0
-row_index = 0
-col_index = 0
+        function sendAudioData(pcmData) {
+            const socket = new WebSocket('ws://localhost:8765');
 
-start_position, end_position = find_table_and_cell(presentation_path, slide_index, row_index, col_index)
-if start_position is not None:
-    print("Start Position:", start_position)
-    print("End Position:", end_position)
-else:
-    print("Cell not found.")
+            socket.binaryType = 'arraybuffer';
+            socket.onopen = () => {
+                const float32Array = new Float32Array(pcmData);
+                socket.send(float32Array.buffer);
+            };
+
+            socket.onerror = error => {
+                console.error('WebSocket error:', error);
+            };
+        }
+    </script>
+</body>
+</html>
