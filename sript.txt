@@ -1,45 +1,44 @@
-import asyncio
-import websockets
-import whisper
-import json
-import queue
-from concurrent.futures import ThreadPoolExecutor
-import soundfile as sf
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio Transcription</title>
+</head>
+<body>
+    <button id="start">Start Recording</button>
+    <button id="stop">Stop Recording</button>
+    <div id="transcription"></div>
 
-audio_queue = queue.Queue()
-executor = ThreadPoolExecutor(max_workers=1)
+    <script>
+        const startButton = document.getElementById('start');
+        const stopButton = document.getElementById('stop');
+        const transcriptionDiv = document.getElementById('transcription');
 
-def process_audio_queue():
-    while True:
-        audio_data, frame_rate = audio_queue.get()
-        try:
-            # Convert audio data to a suitable format for Whisper
-            audio_array, sample_rate = sf.read(audio_data, dtype='float32')
-            if len(audio_array.shape) == 2:
-                audio_array = audio_array.mean(axis=1)  # Convert to mono if stereo
+        let recorder;
+        let socket;
 
-            result = whisper.transcribe(audio_model="base", audio=audio_array, sample_rate=sample_rate)
-            text = result['text']
-            # Send the transcribed text back to the frontend
-            print(text)  # Replace with actual sending logic
-        except Exception as e:
-            print(f"Error processing audio: {e}")
-        finally:
-            audio_queue.task_done()
+        startButton.addEventListener('click', () => {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    recorder = new MediaRecorder(stream);
+                    recorder.start();
 
-executor.submit(process_audio_queue)
+                    socket = new WebSocket('ws://localhost:8765');
+                    socket.onopen = () => {
+                        recorder.ondataavailable = (event) => {
+                            socket.send(event.data);
+                        };
+                    };
+                    socket.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        transcriptionDiv.textContent += data.text + ' ';
+                    };
+                });
+        });
 
-async def transcribe(websocket):
-    while True:
-        try:
-            audio_data = await websocket.recv()
-            audio_queue.put((audio_data, 16000))  # Assuming 16kHz audio
-        except websockets.exceptions.ConnectionClosed:
-            break
-
-async def main():
-    async with websockets.serve(transcribe, "localhost", 8765):
-        print("WebSocket server started")
-        await asyncio.Future()
-
-asyncio.run(main())
+        stopButton.addEventListener('click', () => {
+            recorder.stop();
+            socket.close();
+        });
+    </script>
+</body>
+</html>
