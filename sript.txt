@@ -1,45 +1,45 @@
 import asyncio
 import websockets
-import numpy as np
-import faster_whisper
-import time
+import whisper
+import json
+import queue
+from concurrent.futures import ThreadPoolExecutor
+import soundfile as sf
 
-# Initialize the Faster Whisper model
-model = faster_whisper.WhisperModel("medium")
+audio_queue = queue.Queue()
+executor = ThreadPoolExecutor(max_workers=1)
 
-# Parameters
-SAMPLE_RATE = 16000  # Hz, match the sample rate used on the client
+def process_audio_queue():
+    while True:
+        audio_data, frame_rate = audio_queue.get()
+        try:
+            # Convert audio data to a suitable format for Whisper
+            audio_array, sample_rate = sf.read(audio_data, dtype='float32')
+            if len(audio_array.shape) == 2:
+                audio_array = audio_array.mean(axis=1)  # Convert to mono if stereo
 
-async def audio_handler(websocket, path):
-    print("Connection established.")
-    
-    try:
-        async for message in websocket:
-            # Convert the received bytes to a numpy array of PCM data
-            pcm_data = np.frombuffer(message, dtype=np.float32)
-            print(f"Received PCM data with length: {len(pcm_data)}")
+            result = whisper.transcribe(audio_model="base", audio=audio_array, sample_rate=sample_rate)
+            text = result['text']
+            # Send the transcribed text back to the frontend
+            print(text)  # Replace with actual sending logic
+        except Exception as e:
+            print(f"Error processing audio: {e}")
+        finally:
+            audio_queue.task_done()
 
-            # Transcribe using Faster Whisper
-            start_time = time.time()
-            segments, info = model.transcribe(pcm_data, sample_rate=SAMPLE_RATE)
-            
-            # Combine all transcriptions into a single string
-            transcription = ' '.join([segment['text'] for segment in segments])
-            print(f"Transcription: {transcription}")
-            
-            # Send the transcription back to the client if needed
-            await websocket.send(transcription)
-            
-            print(f"Transcription completed in {time.time() - start_time:.2f} seconds.")
-    
-    except websockets.exceptions.ConnectionClosedError:
-        print("Client disconnected.")
-    
-    finally:
-        print("Connection closed.")
+executor.submit(process_audio_queue)
 
-start_server = websockets.serve(audio_handler, "localhost", 8765)
+async def transcribe(websocket):
+    while True:
+        try:
+            audio_data = await websocket.recv()
+            audio_queue.put((audio_data, 16000))  # Assuming 16kHz audio
+        except websockets.exceptions.ConnectionClosed:
+            break
 
-asyncio.get_event_loop().run_until_complete(start_server)
-print("WebSocket server started. Listening for connections...")
-asyncio.get_event_loop().run_forever()
+async def main():
+    async with websockets.serve(transcribe, "localhost", 8765):
+        print("WebSocket server started")
+        await asyncio.Future()
+
+asyncio.run(main())
