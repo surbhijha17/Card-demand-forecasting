@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PCM Audio Recorder</title>
+    <title>PCM Audio Recorder with Chunking</title>
 </head>
 <body>
     <h1>PCM Audio Recorder</h1>
@@ -11,22 +11,33 @@
     <button id="stopBtn" disabled>Stop Recording</button>
 
     <script>
-        let mediaRecorder;
         let audioContext;
         let sourceNode;
         let scriptProcessor;
+        let audioChunks = [];
+        let chunkSizeInSeconds = 3;  // Size of each chunk in seconds
+        let sampleRate = 16000;  // Sampling rate in Hz
 
         document.getElementById('startBtn').onclick = () => {
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
-                    audioContext = new AudioContext();
+                    audioContext = new AudioContext({ sampleRate });
                     sourceNode = audioContext.createMediaStreamSource(stream);
                     scriptProcessor = audioContext.createScriptProcessor(4096, 1, 1);
 
                     scriptProcessor.onaudioprocess = event => {
                         const inputBuffer = event.inputBuffer;
                         const pcmData = inputBuffer.getChannelData(0);
-                        sendAudioData(pcmData);
+                        audioChunks.push(...pcmData);
+
+                        const chunkSize = chunkSizeInSeconds * sampleRate;
+
+                        // Check if we have accumulated enough data for one chunk
+                        if (audioChunks.length >= chunkSize) {
+                            const chunk = audioChunks.slice(0, chunkSize);
+                            audioChunks = audioChunks.slice(chunkSize);
+                            sendAudioChunk(new Float32Array(chunk));
+                        }
                     };
 
                     sourceNode.connect(scriptProcessor);
@@ -44,15 +55,20 @@
 
             document.getElementById('startBtn').disabled = false;
             document.getElementById('stopBtn').disabled = true;
+
+            // Send any remaining audio chunks
+            if (audioChunks.length > 0) {
+                sendAudioChunk(new Float32Array(audioChunks));
+                audioChunks = [];
+            }
         };
 
-        function sendAudioData(pcmData) {
+        function sendAudioChunk(pcmChunk) {
             const socket = new WebSocket('ws://localhost:8765');
-
             socket.binaryType = 'arraybuffer';
+            
             socket.onopen = () => {
-                const float32Array = new Float32Array(pcmData);
-                socket.send(float32Array.buffer);
+                socket.send(pcmChunk.buffer);
             };
 
             socket.onerror = error => {
