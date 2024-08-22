@@ -1,78 +1,65 @@
-let audioContext;
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
+
 let mediaRecorder;
 let socket;
-let chunks = [];
-let isRecording = false;
+let audioBuffer = [];  // Buffer to accumulate audio data
 
-const startButton = document.getElementById('startButton');
-const stopButton = document.getElementById('stopButton');
-
-startButton.addEventListener('click', async () => {
-    // Initialize WebSocket connection
-    socket = new WebSocket('ws://0.0.0.0:8000');
-    
-    socket.onopen = () => {
-        console.log('WebSocket connection opened');
-    };
-
-    socket.onmessage = (event) => {
-        console.log('Transcript:', event.data);
-    };
-
-    socket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-    };
-
-    socket.onclose = () => {
-        console.log('WebSocket connection closed');
-    };
-
-    // Initialize audio recording
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+startBtn.addEventListener('click', async () => {
+    // Request permission to access the microphone
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorder = new MediaRecorder(stream);
     
-    mediaRecorder.ondataavailable = (event) => {
-        chunks.push(event.data);
+    // Initialize the AudioContext and ScriptProcessorNode
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    console.log("Sample Rate:", audioContext.sampleRate);
+    const input = audioContext.createMediaStreamSource(stream);
+    const processor = audioContext.createScriptProcessor(4096, 1, 1);
+    
+    // Initialize the WebSocket connection
+    socket = new WebSocket('ws://localhost:8000/ws'); // Replace with your WebSocket server URL
 
-        if (isRecording && mediaRecorder.state === 'recording') {
-            setTimeout(() => {
-                if (chunks.length > 0) {
-                    const blob = new Blob(chunks, { type: 'audio/webm' });
-                    sendAudioChunk(blob);
-                    chunks = [];
-                }
-            }, 3000); // Send audio every 3 seconds
+    // Start processing audio data
+    processor.onaudioprocess = (event) => {
+        const audioData = event.inputBuffer.getChannelData(0); // Get the raw PCM data from the first channel
+        const int16Array = new Int16Array(audioData.length);
+
+        // Convert float32 [-1, 1] range to int16 [-32768, 32767] range
+        for (let i = 0; i < audioData.length; i++) {
+            int16Array[i] = Math.max(-1, Math.min(1, audioData[i])) * 0x7FFF;
+        }
+
+        // Accumulate the audio data in the buffer
+        audioBuffer.push(int16Array);
+    };
+
+    // Function to send the accumulated audio data every 5 seconds
+    const sendAudioData = () => {
+        if (audioBuffer.length > 0 && socket.readyState === WebSocket.OPEN) {
+            // Concatenate all the Int16Arrays in the buffer into a single Int16Array
+            const audioDataToSend = new Int16Array(audioBuffer.reduce((acc, cur) => acc.concat(Array.from(cur)), []));
+            socket.send(audioDataToSend.buffer);
+            audioBuffer = [];  // Clear the buffer after sending
         }
     };
 
-    mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' });
-        sendAudioChunk(blob);
-        chunks = [];
-        socket.close();
+    // Start sending the accumulated data every 5 seconds
+    const intervalId = setInterval(sendAudioData, 5000);
+
+    // Start the processor when the WebSocket connection is open
+    socket.onopen = () => {
+        input.connect(processor);
+        processor.connect(audioContext.destination);
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
     };
 
-    mediaRecorder.start();
-    isRecording = true;
-    startButton.disabled = true;
-    stopButton.disabled = false;
+    // Stop processing and close the WebSocket when the stop button is clicked
+    stopBtn.addEventListener('click', () => {
+        clearInterval(intervalId);  // Clear the interval when stopping
+        processor.disconnect();
+        input.disconnect();
+        socket.close();
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+    });
 });
-
-stopButton.addEventListener('click', () => {
-    if (isRecording) {
-        mediaRecorder.stop();
-        isRecording = false;
-        startButton.disabled = false;
-        stopButton.disabled = true;
-    }
-});
-
-function sendAudioChunk(blob) {
-    if (socket.readyState === WebSocket.OPEN) {
-        socket.send(blob);
-        console.log('Audio chunk sent');
-    } else {
-        console.error('WebSocket is not open');
-    }
-}
