@@ -1,42 +1,15 @@
-import tkinter as tk
-import re
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Recorder</title>
+</head>
+<body>
+    <h1>Audio Recorder</h1>
+    <button id="startBtn">Start Recording</button>
+    <button id="stopBtn" disabled>Stop Recording</button>
 
-def check_and_format_tags():
-    lines = text_editor.get("1.0", "end").splitlines()
-
-    for i, line in enumerate(lines):
-        text_editor.tag_remove("green", f"{i+1}.0", f"{i+1}.end")
-        text_editor.tag_remove("red", f"{i+1}.0", f"{i+1}.end")
-
-        match_agent = re.search(r"\bAgent:", line)
-        match_customer = re.search(r"\bCustomer:", line)
-
-        if match_agent:
-            start_index = match_agent.start()
-            text_editor.tag_add("green", f"{i+1}.{start_index}", f"{i+1}.{start_index + len('Agent:')}")
-        if match_customer:
-            start_index = match_customer.start()
-            text_editor.tag_add("red", f"{i+1}.{start_index}", f"{i+1}.{start_index + len('Customer:')}")
-
-    # Scroll the text editor to show the new content
-    text_editor.yview_moveto(1.0)
-
-    # Schedule the next check after 100 milliseconds
-    text_editor.after(100, check_and_format_tags)
-
-root = tk.Tk()
-text_editor = tk.Text(root)
-text_editor.pack()
-
-text_editor.tag_configure("default", foreground="black")
-text_editor.tag_configure("green", foreground="green", font=("TkDefaultFont", 11, "bold"))
-text_editor.tag_configure("red", foreground="red", font=("TkDefaultFont", 11, "bold"))
-
-# Automatically insert initial text
-initial_text = "Agent: hii this surbhi\nCustomer: i am doing good thank you"
-text_editor.insert("end", initial_text)
-
-# Start the periodic check
-check_and_format_tags()
-
-root.mainloop()
+    <script src="script.js"></script>
+</body>
+</html>
