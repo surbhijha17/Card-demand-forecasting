@@ -1,65 +1,128 @@
-const startBtn = document.getElementById('startBtn');
-const stopBtn = document.getElementById('stopBtn');
+document.addEventListener('DOMContentLoaded', function () {
+    const languages = ['English', 'Spanish', 'French', 'German']; // Add more languages as needed
+    const models = ['Azure', 'Whisper']; // Updated to Azure and Whisper models
 
-let mediaRecorder;
-let socket;
-let audioBuffer = [];  // Buffer to accumulate audio data
+    const languageSelect = document.getElementById('languageSelect');
+    const modelSelect = document.getElementById('modelSelect');
 
-startBtn.addEventListener('click', async () => {
-    // Request permission to access the microphone
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    // Populate language dropdown
+    languages.forEach(language => {
+        const option = document.createElement('option');
+        option.value = language;
+        option.text = language;
+        languageSelect.appendChild(option);
+    });
+
+    // Populate model dropdown
+    models.forEach(model => {
+        const option = document.createElement('option');
+        option.value = model;
+        option.text = model;
+        modelSelect.appendChild(option);
+    });
+
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
     
-    // Initialize the AudioContext and ScriptProcessorNode
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    console.log("Sample Rate:", audioContext.sampleRate);
-    const input = audioContext.createMediaStreamSource(stream);
-    const processor = audioContext.createScriptProcessor(4096, 1, 1);
-    
-    // Initialize the WebSocket connection
-    socket = new WebSocket('ws://localhost:8000/ws'); // Replace with your WebSocket server URL
+    let mediaRecorder;
+    let socket;
+    let audioBuffer = [];  // Buffer to accumulate audio data
+    let intervalId;
 
-    // Start processing audio data
-    processor.onaudioprocess = (event) => {
-        const audioData = event.inputBuffer.getChannelData(0); // Get the raw PCM data from the first channel
-        const int16Array = new Int16Array(audioData.length);
+    startBtn.addEventListener('click', async () => {
+        // Get the selected language and model
+        const selectedLanguage = languageSelect.value;
+        const selectedModel = modelSelect.value;
 
-        // Convert float32 [-1, 1] range to int16 [-32768, 32767] range
-        for (let i = 0; i < audioData.length; i++) {
-            int16Array[i] = Math.max(-1, Math.min(1, audioData[i])) * 0x7FFF;
+        // Determine WebSocket URL and interval based on the selected model
+        let socketUrl;
+        let sendInterval;
+
+        if (selectedModel === 'Azure') {
+            socketUrl = 'ws://localhost:8000/azure_ws'; // Replace with your Azure WebSocket server URL
+            sendInterval = 0; // Send data immediately for Azure
+        } else if (selectedModel === 'Whisper') {
+            socketUrl = 'ws://localhost:8000/whisper_ws'; // Replace with your Whisper WebSocket server URL
+            sendInterval = 5000; // Send data every 5 seconds for Whisper
         }
 
-        // Accumulate the audio data in the buffer
-        audioBuffer.push(int16Array);
-    };
+        // Request permission to access the microphone
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        // Initialize the AudioContext and ScriptProcessorNode
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        console.log("Sample Rate:", audioContext.sampleRate);
+        const input = audioContext.createMediaStreamSource(stream);
+        const processor = audioContext.createScriptProcessor(4096, 1, 1);
+        
+        // Initialize the WebSocket connection
+        socket = new WebSocket(socketUrl);
 
-    // Function to send the accumulated audio data every 5 seconds
-    const sendAudioData = () => {
-        if (audioBuffer.length > 0 && socket.readyState === WebSocket.OPEN) {
-            // Concatenate all the Int16Arrays in the buffer into a single Int16Array
-            const audioDataToSend = new Int16Array(audioBuffer.reduce((acc, cur) => acc.concat(Array.from(cur)), []));
-            socket.send(audioDataToSend.buffer);
-            audioBuffer = [];  // Clear the buffer after sending
-        }
-    };
+        // Send configuration data once WebSocket is open
+        socket.onopen = () => {
+            const configData = {
+                language: selectedLanguage.toLowerCase().replace(" ", "-"),
+                model: selectedModel.toLowerCase()
+            };
+            socket.send(JSON.stringify(configData));
 
-    // Start sending the accumulated data every 5 seconds
-    const intervalId = setInterval(sendAudioData, 5000);
+            // Start processing audio data
+            input.connect(processor);
+            processor.connect(audioContext.destination);
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
 
-    // Start the processor when the WebSocket connection is open
-    socket.onopen = () => {
-        input.connect(processor);
-        processor.connect(audioContext.destination);
-        startBtn.disabled = true;
-        stopBtn.disabled = false;
-    };
+            // If sendInterval is 0, send data immediately after each audio chunk is processed
+            if (sendInterval === 0) {
+                processor.onaudioprocess = (event) => {
+                    const audioData = event.inputBuffer.getChannelData(0); // Get the raw PCM data from the first channel
+                    const int16Array = new Int16Array(audioData.length);
 
-    // Stop processing and close the WebSocket when the stop button is clicked
-    stopBtn.addEventListener('click', () => {
-        clearInterval(intervalId);  // Clear the interval when stopping
-        processor.disconnect();
-        input.disconnect();
-        socket.close();
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
+                    // Convert float32 [-1, 1] range to int16 [-32768, 32767] range
+                    for (let i = 0; i < audioData.length; i++) {
+                        int16Array[i] = Math.max(-1, Math.min(1, audioData[i])) * 0x7FFF;
+                    }
+
+                    // Send the audio data immediately
+                    socket.send(int16Array.buffer);
+                };
+            } else {
+                // Otherwise, accumulate audio data in the buffer
+                processor.onaudioprocess = (event) => {
+                    const audioData = event.inputBuffer.getChannelData(0); // Get the raw PCM data from the first channel
+                    const int16Array = new Int16Array(audioData.length);
+
+                    // Convert float32 [-1, 1] range to int16 [-32768, 32767] range
+                    for (let i = 0; i < audioData.length; i++) {
+                        int16Array[i] = Math.max(-1, Math.min(1, audioData[i])) * 0x7FFF;
+                    }
+
+                    // Accumulate the audio data in the buffer
+                    audioBuffer.push(int16Array);
+                };
+
+                // Start sending the accumulated data at the specified interval
+                intervalId = setInterval(() => {
+                    if (audioBuffer.length > 0 && socket.readyState === WebSocket.OPEN) {
+                        // Concatenate all the Int16Arrays in the buffer into a single Int16Array
+                        const audioDataToSend = new Int16Array(audioBuffer.reduce((acc, cur) => acc.concat(Array.from(cur)), []));
+                        socket.send(audioDataToSend.buffer);
+                        audioBuffer = [];  // Clear the buffer after sending
+                    }
+                }, sendInterval);
+            }
+        };
+
+        // Stop processing and close the WebSocket when the stop button is clicked
+        stopBtn.addEventListener('click', () => {
+            if (intervalId) {
+                clearInterval(intervalId);  // Clear the interval when stopping
+            }
+            processor.disconnect();
+            input.disconnect();
+            socket.close();
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        });
     });
 });
